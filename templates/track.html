@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Track Status - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .track-result {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            border-left: 5px solid #2e7d32;
+        }
+
+        .track-result h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .track-result p {
+            margin: 10px 0;
+        }
+
+        .tracking-number {
+            color: #2e7d32;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .in-progress {
+            background: #cfe2ff;
+            color: #084298;
+        }
+
+        .resolved {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .track-photo {
+            margin-top: 10px;
+            width: 150px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .after-photo {
+            margin-top: 10px;
+            width: 200px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #2e7d32;
+        }
+
+        .after-photo-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .after-photo-title {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .no-after-photo {
+            color: #777;
+            font-style: italic;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            background: #ffe0e0;
+            color: #b71c1c;
+            border-radius: 5px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Header -->
+
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+        </nav>
+
+
+        <!-- Login / Logout -->
+
+        <div>
+
+            {% if session.get("user_id") %}
+
+                <span>
+                    Welcome, {{ session.get("user_name") }}
+                </span>
+
+                <a href="/logout" class="login-btn">
+                    Logout
+                </a>
+
+            {% else %}
+
+                <a href="/login" class="login-btn">
+                    Login
+                </a>
+
+                <a href="/register" class="register-btn">
+                    Register
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <!-- Track Section -->
+
+    <section class="form-page">
+
+        <div class="form-box">
+
+            <h2>Track Your Report</h2>
+
+            <p>
+                Enter your Tracking Number to check the current status.
+            </p>
+
+
+            <form action="/track" method="POST">
+
+                <label for="tracking_number">
+                    Tracking Number
+                </label>
+
+                <input
+                    type="text"
+                    id="tracking_number"
+                    name="tracking_number"
+                  
+                    required
+                >
+
+                <button type="submit">
+                    Track Report
+                </button>
+
+            </form>
+
+
+            <!-- Message -->
+
+            {% if message %}
+
+                <div class="message">
+                    {{ message }}
+                </div>
+
+            {% endif %}
+
+
+            <!-- Report Result -->
+
+            {% if result %}
+
+                <div class="track-result">
+
+                    <h3>Report Details</h3>
+
+
+                    <!-- Tracking Number -->
+
+                    <p>
+                        <strong>Tracking Number:</strong>
+
+                        <span class="tracking-number">
+                            {{ result[8] }}
+                        </span>
+                    </p>
+
+
+                    <p>
+                        <strong>Waste Type:</strong>
+                        {{ result[1] }}
+                    </p>
+
+
+                    <p>
+                        <strong>Location:</strong>
+                        {{ result[2] }}
+                    </p>
+
+
+                    <p>
+                        <strong>Description:</strong>
+                        {{ result[3] }}
+                    </p>
+
+
+                    <!-- Before Cleaning Photo -->
+
+                    <p>
+                        <strong>Before Cleaning Photo:</strong>
+                    </p>
+
+                    {% if result[4] %}
+
+                        <img
+                            src="{{ url_for('uploaded_file', filename=result[4]) }}"
+                            class="track-photo"
+                            alt="Before Cleaning Photo">
+
+                    {% else %}
+
+                        <p>No photo available.</p>
+
+                    {% endif %}
+
+
+                    <!-- Status -->
+
+                    <p>
+
+                        <strong>Status:</strong>
+
+                        {% if result[5] == "Pending" %}
+
+                            <span class="status pending">
+                                Pending
+                            </span>
+
+                        {% elif result[5] == "In Progress" %}
+
+                            <span class="status in-progress">
+                                In Progress
+                            </span>
+
+                        {% elif result[5] == "Resolved" %}
+
+                            <span class="status resolved">
+                                Resolved
+                            </span>
+
+                        {% else %}
+
+                            <span class="status">
+                                {{ result[5] }}
+                            </span>
+
+                        {% endif %}
+
+                    </p>
+
+
+                    <!-- Submitted Date -->
+
+                    <p>
+                        <strong>Submitted On:</strong>
+                        {{ result[6] }}
+                    </p>
+
+
+                    <!-- After Cleaning Photo -->
+
+                    <div class="after-photo-section">
+
+                        <p class="after-photo-title">
+                            After Cleaning Photo:
+                        </p>
+
+                        {% if result[7] %}
+
+                            <img
+                                src="{{ url_for('uploaded_file', filename=result[7]) }}"
+                                class="after-photo"
+                                alt="After Cleaning Photo">
+
+                        {% else %}
+
+                            <p class="no-after-photo">
+                                After cleaning photo is not uploaded yet.
+                            </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+        <p>
+            Together for a Cleaner and Greener City
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

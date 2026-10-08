@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Login - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <style>
+
+        .forgot-password {
+            display: block;
+            text-align: center;
+            margin-top: 15px;
+            color: #2e7d32;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- Login Form -->
+    <section class="form-page">
+
+        <div class="form-box">
+
+            <h2>Login</h2>
+
+            <h2 style="color: red;">TEST - LOGIN PAGE UPDATED</h2>
+ 
+            {% if message %}
+
+            <p style="
+                color: red;
+                text-align: center;
+                font-weight: bold;
+            ">
+
+                {{ message }}
+
+            </p>
+
+            {% endif %}
+
+
+            <form action="/login" method="POST">
+
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                >
+
+
+                <button type="submit">
+                    Login
+                </button>
+
+            </form>
+
+
+            <!-- Forgot Password -->
+
+            <a
+                href="/forgot-password"
+                class="forgot-password">
+
+                Forgot Password?
+
+            </a>
+
+
+            <!-- Register -->
+
+            <p style="text-align: center; margin-top: 20px;">
+
+                Don't have an account?
+
+                <a href="/register">
+                    Register
+                </a>
+
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+        <p>
+            Together for a Cleaner and Greener City
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

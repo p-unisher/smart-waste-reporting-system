@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Register - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- Register Form -->
+    <section class="form-page">
+
+        <div class="form-box">
+
+            <h2>Create Account</h2>
+
+            <form action="/register" method="POST">
+
+                <label>Full Name</label>
+
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Enter your name"
+                    required
+                >
+
+
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <label>Phone Number</label>
+
+                <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Enter your phone number"
+                    required
+                >
+
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Create a password"
+                    required
+                >
+
+
+                <button type="submit">
+                    Register
+                </button>
+
+            </form>
+
+
+            <p style="text-align: center; margin-top: 20px;">
+
+                Already have an account?
+
+                <a href="/login">
+                    Login
+                </a>
+
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+        <p>
+            Together for a Cleaner and Greener City
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

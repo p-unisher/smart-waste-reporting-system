@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Verify OTP - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+            <a href="/login" class="login-btn">Login</a>
+            <a href="/register" class="register-btn">Register</a>
+        </nav>
+
+    </header>
+
+
+    <!-- OTP Section -->
+    <section class="report-section">
+
+        <div class="report-container">
+
+            <h1>Verify OTP</h1>
+
+            <p>
+                Enter the 6-digit OTP sent to your email.
+            </p>
+
+            <form action="/verify-otp" method="POST">
+
+                <label for="otp">Enter OTP</label>
+
+                <input
+                    type="text"
+                    id="otp"
+                    name="otp"
+                    placeholder="Enter 6-digit OTP"
+                    maxlength="6"
+                    minlength="6"
+                    pattern="[0-9]{6}"
+                    inputmode="numeric"
+                    required
+                >
+
+                <button type="submit">
+                    Verify OTP
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+</body>
+
+</html>

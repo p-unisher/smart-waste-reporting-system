@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Report Waste - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .report-help {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .field-help {
+            color: #777;
+            font-size: 13px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+
+        .photo-preview {
+            display: none;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .photo-preview img {
+            width: 200px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .photo-name {
+            margin-top: 5px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .required-text {
+            color: #d32f2f;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        /* Remove Photo Button */
+
+        .remove-photo-button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .remove-photo-button:hover {
+            background: #b71c1c;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Header -->
+
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+        </nav>
+
+
+        <!-- Login / Logout -->
+
+        <div>
+
+            {% if session.get("user_id") %}
+
+                <span>
+                    Welcome, {{ session.get("user_name") }}
+                </span>
+
+                <a href="/logout" class="login-btn">
+                    Logout
+                </a>
+
+            {% else %}
+
+                <a href="/login" class="login-btn">
+                    Login
+                </a>
+
+                <a href="/register" class="register-btn">
+                    Register
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <!-- Report Form -->
+
+    <section class="form-page">
+
+        <div class="form-box">
+
+            <h2>Report Waste</h2>
+
+            <p class="report-help">
+                Please provide accurate information about the waste problem.
+                Fields marked with <span class="required-text">*</span> are required.
+            </p>
+
+
+            <form
+                action="/report"
+                method="POST"
+                enctype="multipart/form-data"
+            >
+
+                <!-- Waste Type -->
+
+                <label for="waste_type">
+                    Waste Type <span class="required-text">*</span>
+                </label>
+
+                <select
+                    id="waste_type"
+                    name="waste_type"
+                    required
+                >
+
+                    <option value="">
+                        Select Waste Type
+                    </option>
+
+                    <option value="Garbage">
+                        Garbage
+                    </option>
+
+                    <option value="Plastic Waste">
+                        Plastic Waste
+                    </option>
+
+                    <option value="Food Waste">
+                        Food Waste
+                    </option>
+
+                    <option value="Construction Waste">
+                        Construction Waste
+                    </option>
+
+                    <option value="Electronic Waste">
+                        Electronic Waste
+                    </option>
+
+                    <option value="Other">
+                        Other
+                    </option>
+
+                </select>
+
+
+                <!-- Location -->
+
+                <label for="location">
+                    Location <span class="required-text">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    placeholder="Example: Taki Road, Nallasopara"
+                    required
+                >
+
+                <p class="field-help">
+                    Enter the place where the waste is located.
+                </p>
+
+
+                <!-- Description -->
+
+                <label for="description">
+                    Description <span class="required-text">*</span>
+                </label>
+
+                <textarea
+                    id="description"
+                    name="description"
+                    rows="5"
+                    maxlength="500"
+                    placeholder="Example: Large amount of garbage is lying near the road."
+                    required
+                ></textarea>
+
+                <p class="field-help">
+                    Briefly explain what type of waste is present and the problem.
+                    Maximum 500 characters.
+                </p>
+
+
+                <!-- Waste Photo -->
+
+                <label for="photo">
+                    Upload Waste Photo <span class="required-text">*</span>
+                </label>
+
+                <input
+                    type="file"
+                    id="photo"
+                    name="photo"
+                    accept="image/jpeg,image/png,image/jpg,image/webp"
+                    required
+                >
+
+                <p class="field-help">
+                    Upload a clear photo showing the waste problem.
+                </p>
+
+
+                <!-- Photo Preview -->
+
+                <div class="photo-preview" id="photoPreview">
+
+                    <img
+                        id="previewImage"
+                        src=""
+                        alt="Selected Waste Photo"
+                    >
+
+                    <p class="photo-name" id="photoName"></p>
+
+
+                    <!-- Remove Photo Button -->
+
+                    <button
+                        type="button"
+                        id="removePhoto"
+                        class="remove-photo-button">
+
+                        Remove Photo
+
+                    </button>
+
+                </div>
+
+
+                <!-- Submit -->
+
+                <button type="submit">
+                    Submit Report
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+        <p>
+            Together for a Cleaner and Greener City
+        </p>
+
+    </footer>
+
+
+    <!-- Photo Preview Script -->
+
+    <script>
+
+        const photoInput =
+            document.getElementById("photo");
+
+        const photoPreview =
+            document.getElementById("photoPreview");
+
+        const previewImage =
+            document.getElementById("previewImage");
+
+        const photoName =
+            document.getElementById("photoName");
+
+        const removePhoto =
+            document.getElementById("removePhoto");
+
+
+        /* Show selected photo */
+
+        photoInput.addEventListener("change", function() {
+
+            const file = this.files[0];
+
+            if (file) {
+
+                previewImage.src =
+                    URL.createObjectURL(file);
+
+                photoName.textContent =
+                    "Selected: " + file.name;
+
+                photoPreview.style.display =
+                    "block";
+
+            }
+
+        });
+
+
+        /* Remove selected photo */
+
+        removePhoto.addEventListener("click", function() {
+
+            photoInput.value = "";
+
+            previewImage.src = "";
+
+            photoName.textContent = "";
+
+            photoPreview.style.display =
+                "none";
+
+        });
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+```
+<title>Admin Login - Smart Waste Reporting System</title>
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}">
+```
+
+</head>
+
+<body>
+
+```
+<div class="login-container">
+
+    <h2>Admin Login</h2>
+
+    <p>Login to access the Admin Panel</p>
+
+
+    <!-- Message -->
+
+    {% if message %}
+
+        <p style="color: red; text-align: center;">
+            {{ message }}
+        </p>
+
+    {% endif %}
+
+
+    <!-- Admin Login Form -->
+
+    <form action="{{ url_for('admin_login') }}" method="POST">
+
+        <label>Email</label>
+
+        <input
+            type="email"
+            name="email"
+            placeholder="Enter admin email"
+            required
+        >
+
+
+        <label>Password</label>
+
+        <div>
+
+            <input
+                type="password"
+                id="adminPassword"
+                name="password"
+                placeholder="Enter admin password"
+                required
+            >
+
+            <button
+                type="button"
+                onclick="togglePassword('adminPassword')"
+            >
+                👁
+            </button>
+
+        </div>
+
+
+        <!-- Forgot Password -->
+
+        <div class="admin-forgot">
+
+            <a href="{{ url_for('admin_forgot_password') }}">
+                Forgot Password?
+            </a>
+
+        </div>
+
+
+        <!-- Login Button -->
+
+        <button type="submit">
+            Admin Login
+        </button>
+
+    </form>
+
+</div>
+
+
+<script>
+
+    function togglePassword(id) {
+
+        const password = document.getElementById(id);
+
+        if (password.type === "password") {
+
+            password.type = "text";
+
+        } else {
+
+            password.type = "password";
+
+        }
+
+    }
+
+</script>
+```
+
+</body>
+
+</html>

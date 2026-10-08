@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Verify Admin OTP - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .admin-reset-container {
+
+            width: 400px;
+
+            margin: 80px auto;
+
+            padding: 35px;
+
+            background-color: white;
+
+            border-radius: 10px;
+
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.15);
+
+        }
+
+
+        .admin-reset-container h2 {
+
+            text-align: center;
+
+            color: #16833a;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .admin-reset-container p {
+
+            text-align: center;
+
+            margin-bottom: 25px;
+
+            color: #555;
+
+        }
+
+
+        .admin-reset-container label {
+
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-weight: bold;
+
+        }
+
+
+        .admin-reset-container input {
+
+            width: 100%;
+
+            padding: 12px;
+
+            margin-bottom: 18px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 5px;
+
+            box-sizing: border-box;
+
+        }
+
+
+        .admin-reset-container button {
+
+            width: 100%;
+
+            padding: 13px;
+
+            background-color: #16833a;
+
+            color: white;
+
+            border: none;
+
+            border-radius: 5px;
+
+            cursor: pointer;
+
+            font-size: 16px;
+
+        }
+
+
+        .admin-reset-container button:hover {
+
+            background-color: #10652d;
+
+        }
+
+
+        .admin-message {
+
+            padding: 10px;
+
+            margin-bottom: 15px;
+
+            text-align: center;
+
+            color: red;
+
+            background-color: #ffeaea;
+
+            border-radius: 5px;
+
+        }
+
+
+        .back-login {
+
+            display: block;
+
+            margin-top: 18px;
+
+            text-align: center;
+
+            color: #16833a;
+
+            text-decoration: none;
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="admin-reset-container">
+
+
+        <h2>Verify Admin OTP</h2>
+
+
+        <p>
+            Enter the OTP shown in the Command Prompt.
+        </p>
+
+
+        {% if message %}
+
+        <div class="admin-message">
+
+            {{ message }}
+
+        </div>
+
+        {% endif %}
+
+
+        <form
+            action="/admin-verify-otp"
+            method="POST">
+
+
+            <label>
+                Enter OTP
+            </label>
+
+
+            <input
+                type="text"
+                name="otp"
+                placeholder="Enter 6 digit OTP"
+                maxlength="6"
+                required
+            >
+
+
+            <button type="submit">
+
+                Verify OTP
+
+            </button>
+
+
+        </form>
+
+
+        <a
+            href="/admin-login"
+            class="back-login">
+
+            Back to Admin Login
+
+        </a>
+
+
+    </div>
+
+
+</body>
+
+</html>

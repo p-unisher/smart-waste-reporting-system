@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Smart Waste Reporting System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+
+            {% if session.get("user_id") %}
+                <a href="/my-reports">My Reports</a>
+            {% endif %}
+
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+        </nav>
+
+
+        <!-- Login / Logout Section -->
+        <div>
+
+            {% if session.get("user_id") %}
+
+                <span>
+                    Welcome, {{ session.get("user_name") }}
+                </span>
+
+                <a href="/logout" class="login-btn">
+                    Logout
+                </a>
+
+            {% else %}
+
+                <a href="/login" class="login-btn">
+                    Login
+                </a>
+
+                <a href="/register" class="register-btn">
+                    Register
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <!-- Hero Section -->
+    <section class="hero">
+
+        <div class="hero-text">
+
+            <h2>Cleaner City | Greener Tomorrow</h2>
+
+            <h1>Smart Waste Reporting System</h1>
+
+            <p>
+                Help keep our city clean by reporting waste and
+                garbage problems in your area. Your report can help
+                authorities take quick action.
+            </p>
+
+            <a href="/report" class="btn">
+                Report Waste
+            </a>
+
+            <a href="/register" class="btn btn-light">
+                Register
+            </a>
+
+            <a href="/login" class="btn btn-light">
+                Login
+            </a>
+
+        </div>
+
+
+        <!-- Simple Waste Illustration -->
+        <div class="hero-image">
+
+            <div class="city">
+                🏢 🏠 🌳
+            </div>
+
+            <div class="bin">
+                🗑️
+            </div>
+
+            <p>Keep Your City Clean</p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Features Section -->
+    <section class="features">
+
+        <h2>How Our System Helps</h2>
+
+        <div class="feature-container">
+
+            <div class="feature-card">
+
+                <div class="feature-icon">📸</div>
+
+                <h3>Report Waste</h3>
+
+                <p>
+                    Report garbage problems by providing
+                    details about the waste and its location.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">🔍</div>
+
+                <h3>Track Status</h3>
+
+                <p>
+                    Check the status of your complaint and
+                    know whether action has been taken.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">👨‍💼</div>
+
+                <h3>Admin Review</h3>
+
+                <p>
+                    Administrators can review reports and
+                    update their status.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">🌱</div>
+
+                <h3>Cleaner City</h3>
+
+                <p>
+                    Working together can help create a
+                    cleaner and healthier environment.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- About Section -->
+    <section class="about" id="about">
+
+        <h2>About Our System</h2>
+
+        <p>
+            The Smart Waste Reporting System allows citizens
+            to report waste and garbage problems easily.
+            Users can submit a report and later track its
+            status. The system helps in better management
+            of waste complaints and encourages people to
+            keep their surroundings clean.
+        </p>
+
+    </section>
+
+
+    <!-- Report Section -->
+    <section class="report-section">
+
+        <h2>See Waste? Report It!</h2>
+
+        <p>
+            Your small action can make a big difference.
+        </p>
+
+        <a href="/report" class="btn">
+            Report Waste
+        </a>
+
+    </section>
+
+
+    <!-- Track Section -->
+    <section class="track-section">
+
+        <h2>Track Your Report</h2>
+
+        <p>
+            Already submitted a report?
+            Check its current status.
+        </p>
+
+        <br>
+
+        <a href="/track" class="btn">
+            Track Status
+        </a>
+
+    </section>
+
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+
+        <h2>Frequently Asked Questions</h2>
+
+
+        <div class="faq-box">
+
+            <h3>How can I report waste?</h3>
+
+            <p>
+                Click on the Report Waste button and
+                fill in the required details.
+            </p>
+
+        </div>
+
+
+        <div class="faq-box">
+
+            <h3>Can I track my complaint?</h3>
+
+            <p>
+                Yes. You can use the Track Status option
+                to check your report.
+            </p>
+
+        </div>
+
+
+        <div class="faq-box">
+
+            <h3>Who checks the reports?</h3>
+
+            <p>
+                The administrator reviews the submitted
+                waste reports.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- Contact Section -->
+    <section class="contact" id="contact">
+
+        <h2>Contact Us</h2>
+
+        <p>
+            Have a question or problem?
+            Contact the system administrator.
+        </p>
+
+        <br>
+
+        <p>
+            📧 Email: smartwaste@example.com
+        </p>
+
+    </section>
+
+
+    <!-- Bottom Banner -->
+    <section class="banner">
+
+        <h2>A Cleaner City Starts With You 🌱</h2>
+
+        <p>
+            Report waste. Take action. Make a difference.
+        </p>
+
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+        <p>
+            Together for a Cleaner and Greener City
+        </p>
+
+    </footer>
+
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+
+</body>
+
+</html>

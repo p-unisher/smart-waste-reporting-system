@@ -1,0 +1,486 @@
+/* Smart Waste Reporting System */
+
+/* Basic settings */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5fff7;
+    color: #333;
+}
+
+/* Header */
+header {
+    background-color: white;
+    padding: 18px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.logo {
+    color: #16833a;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+nav a {
+    text-decoration: none;
+    color: #333;
+    margin: 0 12px;
+    font-size: 15px;
+}
+
+nav a:hover {
+    color: #16833a;
+}
+
+/* Login and Register buttons */
+.login-btn {
+    color: #16833a;
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+.register-btn {
+    background-color: #16833a;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.register-btn:hover {
+    background-color: #10652d;
+}
+
+/* Hero section */
+.hero {
+    min-height: 500px;
+    padding: 70px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to right, #effff2, #ffffff);
+}
+
+.hero-text {
+    width: 50%;
+}
+
+.hero-text h1 {
+    font-size: 45px;
+    color: #126b30;
+    margin-bottom: 20px;
+}
+
+.hero-text h2 {
+    color: #16833a;
+    margin-bottom: 15px;
+}
+
+.hero-text p {
+    font-size: 17px;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+/* Main buttons */
+.btn {
+    display: inline-block;
+    background-color: #16833a;
+    color: white;
+    padding: 13px 22px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-right: 10px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background-color: #10652d;
+}
+
+.btn-light {
+    background-color: white;
+    color: #16833a;
+    border: 1px solid #16833a;
+}
+
+/* Hero illustration */
+.hero-image {
+    width: 40%;
+    text-align: center;
+}
+
+.bin {
+    font-size: 130px;
+}
+
+.city {
+    font-size: 55px;
+    margin-top: 10px;
+}
+
+/* Features */
+.features {
+    padding: 60px 7%;
+    text-align: center;
+    background-color: white;
+}
+
+.features h2 {
+    color: #126b30;
+    margin-bottom: 35px;
+}
+
+.feature-container {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.feature-card {
+    width: 220px;
+    padding: 25px;
+    background-color: #f1fff4;
+    border-radius: 10px;
+    border: 1px solid #d9f2df;
+}
+
+.feature-card h3 {
+    color: #16833a;
+    margin: 15px 0;
+}
+
+.feature-card p {
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.feature-icon {
+    font-size: 40px;
+}
+
+/* About section */
+.about {
+    padding: 60px 10%;
+    text-align: center;
+}
+
+.about h2 {
+    color: #126b30;
+    margin-bottom: 20px;
+}
+
+.about p {
+    max-width: 800px;
+    margin: auto;
+    line-height: 1.7;
+}
+
+/* Report section */
+.report-section {
+    padding: 60px 7%;
+    background-color: #eaffef;
+    text-align: center;
+}
+
+.report-section h2 {
+    color: #126b30;
+    margin-bottom: 15px;
+}
+
+.report-section p {
+    margin-bottom: 25px;
+}
+
+/* Track section */
+.track-section {
+    padding: 60px 7%;
+    text-align: center;
+    background-color: white;
+}
+
+.track-section h2 {
+    color: #126b30;
+    margin-bottom: 20px;
+}
+
+.track-box {
+    max-width: 500px;
+    margin: auto;
+}
+
+.track-box input {
+    width: 70%;
+    padding: 13px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* FAQ */
+.faq {
+    padding: 60px 7%;
+    background-color: #f5fff7;
+}
+
+.faq h2 {
+    text-align: center;
+    color: #126b30;
+    margin-bottom: 30px;
+}
+
+.faq-box {
+    max-width: 800px;
+    margin: 15px auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 7px;
+}
+
+.faq-box h3 {
+    color: #16833a;
+    margin-bottom: 8px;
+}
+
+/* Contact */
+.contact {
+    padding: 60px 7%;
+    text-align: center;
+    background-color: white;
+}
+
+.contact h2 {
+    color: #126b30;
+    margin-bottom: 20px;
+}
+
+/* Bottom banner */
+.banner {
+    background-color: #16833a;
+    color: white;
+    padding: 35px;
+    text-align: center;
+}
+
+.banner h2 {
+    margin-bottom: 10px;
+}
+
+/* Footer */
+footer {
+    background-color: #0d4d24;
+    color: white;
+    text-align: center;
+    padding: 25px;
+}
+
+footer p {
+    margin: 5px;
+}
+
+/* Login/Register page */
+.form-page {
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f1fff4;
+}
+
+.form-box {
+    width: 400px;
+    background-color: white;
+    padding: 35px;
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-box h2 {
+    text-align: center;
+    color: #16833a;
+    margin-bottom: 25px;
+}
+
+.form-box label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: bold;
+}
+
+.form-box input,
+.form-box textarea,
+.form-box select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 18px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-box button {
+    width: 100%;
+    padding: 13px;
+    background-color: #16833a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.form-box button:hover {
+    background-color: #10652d;
+}
+
+/* Mobile view */
+@media (max-width: 768px) {
+
+    header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    nav a {
+        display: inline-block;
+        margin: 5px;
+    }
+
+    .hero {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-text {
+        width: 100%;
+    }
+
+    .hero-text h1 {
+        font-size: 35px;
+    }
+
+    .hero-image {
+        width: 100%;
+        margin-top: 30px;
+    }
+
+    .feature-card {
+        width: 90%;
+    }
+
+    .track-box input {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .form-box {
+        width: 90%;
+    }
+}
+
+
+/* ================================= */
+/* Admin Login Page */
+/* ================================= */
+
+.login-container {
+    width: 400px;
+    margin: 80px auto;
+    padding: 35px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.15);
+}
+
+.login-container h2 {
+    text-align: center;
+    color: #16833a;
+    margin-bottom: 10px;
+}
+
+.login-container p {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #555;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: bold;
+}
+
+.login-container input[type="email"],
+.login-container input[type="password"],
+.login-container input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 18px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.login-container form > div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.login-container form > div input {
+    margin-bottom: 0;
+}
+
+.login-container form > div button {
+    width: 45px;
+    padding: 10px;
+    margin-left: 5px;
+    background-color: white;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.login-container form > div button:hover {
+    background-color: #f1f1f1;
+}
+
+.login-container form > button {
+    width: 100%;
+    padding: 13px;
+    background-color: #16833a;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.login-container form > button:hover {
+    background-color: #10652d;
+}
+/* Admin Forgot Password */
+
+.admin-forgot {
+    text-align: right;
+    margin-top: -8px;
+    margin-bottom: 18px;
+}
+
+.admin-forgot a {
+    color: #16833a;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.admin-forgot a:hover {
+    text-decoration: underline;
+}

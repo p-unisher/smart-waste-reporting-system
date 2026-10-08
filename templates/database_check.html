@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Database Check</title>
+
+    <link rel="stylesheet" href="/static/css/style.css">
+
+</head>
+
+<body>
+
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+    </header>
+
+
+    <section class="features">
+
+        <h2>Registered Users</h2>
+
+        <br>
+
+        <table border="1" cellpadding="10" style="margin: auto;">
+
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+            </tr>
+
+            {% for user in users %}
+
+            <tr>
+                <td>{{ user[0] }}</td>
+                <td>{{ user[1] }}</td>
+                <td>{{ user[2] }}</td>
+                <td>{{ user[3] }}</td>
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+    </section>
+
+
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

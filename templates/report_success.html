@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Report Submitted - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .success-box {
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 30px;
+            text-align: center;
+            background: #f5f5f5;
+            border-radius: 10px;
+            border-top: 5px solid #2e7d32;
+        }
+
+        .success-icon {
+            font-size: 50px;
+        }
+
+        .success-box h2 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .report-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .report-info p {
+            margin: 10px 0;
+        }
+
+        .tracking-number {
+            font-size: 22px;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: #856404;
+            font-weight: bold;
+        }
+
+        .success-buttons {
+            margin-top: 25px;
+        }
+
+        .success-buttons a {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .track-button {
+            background: #2e7d32;
+            color: white;
+        }
+
+        .home-button {
+            background: #555;
+            color: white;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <header>
+
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
+
+        <nav>
+
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
+
+        </nav>
+
+    </header>
+
+
+    <section>
+
+        <div class="success-box">
+
+            <div class="success-icon">
+                ✅
+            </div>
+
+            <h2>
+                Report Submitted Successfully!
+            </h2>
+
+            <p>
+                Thank you for reporting the waste problem.
+            </p>
+
+
+            <div class="report-info">
+
+                <p>
+                    <strong>Your Tracking Number:</strong>
+                </p>
+
+                <p class="tracking-number">
+                    {{ tracking_number }}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+
+                    <span class="pending">
+                        Pending
+                    </span>
+                </p>
+
+                <p>
+                    Your report has been submitted and is waiting
+                    for admin review.
+                </p>
+
+                <p>
+                    <strong>Important:</strong>
+                    Please save your tracking number to check
+                    your report status later.
+                </p>
+
+            </div>
+
+
+            <div class="success-buttons">
+
+                <a href="/track" class="track-button">
+                    Track Report
+                </a>
+
+                <a href="/" class="home-button">
+                    Go to Home
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
+        </p>
+
+        <p>
+            Together for a Cleaner and Greener City
+        </p>
+
+    </footer>
+
+</body>
+
+</html>

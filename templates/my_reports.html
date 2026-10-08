@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>My Reports - Smart Waste Reporting System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .reports-container {
+            width: 95%;
+            margin: 30px auto;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .reports-table th,
+        .reports-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .reports-table th {
+            background: #2e7d32;
+            color: white;
+        }
+
+        .tracking-number {
+            color: #2e7d32;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .report-photo {
+            width: 100px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .after-photo {
+            width: 100px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid #2e7d32;
+        }
+
+        .status-pending {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .status-progress {
+            color: blue;
+            font-weight: bold;
+        }
+
+        .status-resolved {
+            color: green;
+            font-weight: bold;
+        }
+
+        .no-reports {
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .home-button {
+            display: inline-block;
+            margin-top: 20px;
+            margin-right: 10px;
+            padding: 10px 18px;
+            background: #2e7d32;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .home-button:hover {
+            background: #1b5e20;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="reports-container">
+
+        <h1 class="page-title">
+            My Reports
+        </h1>
+
+
+        {% if reports %}
+
+        <table class="reports-table">
+
+            <tr>
+
+                <th>Tracking Number</th>
+
+                <th>Waste Type</th>
+
+                <th>Location</th>
+
+                <th>Description</th>
+
+                <th>Before Cleaning</th>
+
+                <th>Status</th>
+
+                <th>Date & Time</th>
+
+                <th>After Cleaning</th>
+
+            </tr>
+
+
+            {% for report in reports %}
+
+            <tr>
+
+                <!-- Tracking Number -->
+
+                <td>
+
+                    <span class="tracking-number">
+                        {{ report[8] }}
+                    </span>
+
+                </td>
+
+
+                <!-- Waste Type -->
+
+                <td>
+                    {{ report[1] }}
+                </td>
+
+
+                <!-- Location -->
+
+                <td>
+                    {{ report[2] }}
+                </td>
+
+
+                <!-- Description -->
+
+                <td>
+                    {{ report[3] }}
+                </td>
+
+
+                <!-- Before Cleaning Photo -->
+
+                <td>
+
+                    {% if report[4] %}
+
+                    <img
+                        src="{{ url_for('uploaded_file', filename=report[4]) }}"
+                        class="report-photo"
+                        alt="Before Cleaning Photo">
+
+                    {% else %}
+
+                    No Photo
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- Status -->
+
+                <td>
+
+                    {% if report[5] == "Pending" %}
+
+                        <span class="status-pending">
+                            {{ report[5] }}
+                        </span>
+
+                    {% elif report[5] == "In Progress" %}
+
+                        <span class="status-progress">
+                            {{ report[5] }}
+                        </span>
+
+                    {% elif report[5] == "Resolved" %}
+
+                        <span class="status-resolved">
+                            {{ report[5] }}
+                        </span>
+
+                    {% else %}
+
+                        {{ report[5] }}
+
+                    {% endif %}
+
+                </td>
+
+
+                <!-- Date & Time -->
+
+                <td>
+                    {{ report[6] or "Not available" }}
+                </td>
+
+
+                <!-- After Cleaning Photo -->
+
+                <td>
+
+                    {% if report[7] %}
+
+                    <img
+                        src="{{ url_for('uploaded_file', filename=report[7]) }}"
+                        class="after-photo"
+                        alt="After Cleaning Photo">
+
+                    {% else %}
+
+                    Not uploaded yet
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </table>
+
+
+        {% else %}
+
+        <div class="no-reports">
+
+            <h3>No Reports Found</h3>
+
+            <p>
+                You have not submitted any waste reports yet.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+
+        <a
+            href="/"
+            class="home-button">
+
+            Go to Home
+
+        </a>
+
+
+        <a
+            href="/track"
+            class="home-button">
+
+            Track a Report
+
+        </a>
+
+
+    </div>
+
+</body>
+
+</html>
