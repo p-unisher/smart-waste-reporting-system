@@ -1,131 +1,141 @@
+```html
 <!DOCTYPE html>
-
 <html>
 
 <head>
+    <title>Login - Smart Waste Reporting System</title>
 
-```
-<title>Login - Smart Waste Reporting System</title>
-
-<link rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}">
-```
-
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
 
-```
-<!-- Header -->
-<header>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
 
-    <div class="logo">
-        📚 Smart Waste Reporting System
-    </div>
-
-    <nav>
-
-        <a href="{{ url_for('home') }}">Home</a>
-        <a href="{{ url_for('about') }}">About</a>
-        <a href="{{ url_for('report') }}">Report Waste</a>
-        <a href="{{ url_for('track') }}">Track Status</a>
-        <a href="{{ url_for('faq') }}">FAQs</a>
-        <a href="{{ url_for('contact') }}">Contact</a>
-
-    </nav>
-
-</header>
+        <nav>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('report') }}">Report Waste</a>
+            <a href="{{ url_for('track') }}">Track Status</a>
+            <a href="{{ url_for('faq') }}">FAQs</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+        </nav>
+    </header>
 
 
-<!-- Login Form -->
-<section class="form-page">
+    <!-- Login Section -->
+    <section class="form-page">
 
-    <div class="form-box">
+        <div class="form-box">
 
-        <h2>Login</h2>
+            <h2>Welcome Back</h2>
 
-
-        <!-- Message -->
-        {% if message %}
-
-            <p style="text-align: center; color: red;">
-                {{ message }}
+            <p style="text-align: center;">
+                Login to Smart Waste Reporting System
             </p>
 
-        {% endif %}
+            <!-- Error or Success Message -->
+            {% if message %}
+                <p style="text-align: center; color: red;">
+                    {{ message }}
+                </p>
+            {% endif %}
 
 
-        <form action="{{ url_for('login') }}" method="POST">
+            <!-- User Login -->
+            <h3 style="text-align: center;">User Login</h3>
 
-            <label>Email</label>
+            <form action="{{ url_for('login') }}" method="POST">
 
-            <input
-                type="email"
-                name="email"
-                placeholder="Enter your email"
-                required
-            >
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required
+                >
+
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                >
+
+                <button type="submit">
+                    Login as User
+                </button>
+
+            </form>
 
 
-            <label>Password</label>
+            <!-- User Forgot Password -->
+            <p style="text-align: center; margin-top: 15px;">
+                <a href="{{ url_for('forgot_password') }}">
+                    Forgot Password?
+                </a>
+            </p>
 
-            <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                required
-            >
-
-
-            <button type="submit">
-                Login
-            </button>
-
-        </form>
+            <!-- User Registration -->
+            <p style="text-align: center; margin-top: 15px;">
+                Don't have an account?
+                <a href="{{ url_for('register') }}">Register</a>
+            </p>
 
 
-        <!-- Forgot Password -->
+            <hr style="margin: 25px 0;">
 
-        <p style="text-align: center; margin-top: 15px;">
 
-            <a href="{{ url_for('forgot_password') }}">
-                Forgot Password?
-            </a>
+            <!-- Admin Login Option -->
+            <h3 style="text-align: center;">Administrator</h3>
 
+            <p style="text-align: center;">
+                Are you the administrator of this system?
+            </p>
+
+            <div style="text-align: center; margin-top: 15px;">
+
+                <a href="{{ url_for('admin_login') }}"
+                   style="display: inline-block;
+                          padding: 12px 22px;
+                          background-color: #247a45;
+                          color: white;
+                          text-decoration: none;
+                          border-radius: 5px;">
+
+                    Admin Login
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- Footer -->
+    <footer>
+
+        <p>
+            © 2026 Smart Waste Reporting System
         </p>
 
-
-        <!-- Register -->
-
-        <p style="text-align: center; margin-top: 20px;">
-
-            Don't have an account?
-
-            <a href="{{ url_for('register') }}">
-                Register
-            </a>
-
+        <p>
+            Together for a Cleaner and Greener City
         </p>
 
-    </div>
-
-</section>
-
-
-<!-- Footer -->
-<footer>
-
-    <p>
-        © 2026 Smart Waste Reporting System
-    </p>
-
-    <p>
-        Together for a Cleaner and Greener City
-    </p>
-
-</footer>
-```
+    </footer>
 
 </body>
 
 </html>
+```
