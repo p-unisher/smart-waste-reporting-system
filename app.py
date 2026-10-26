@@ -20,16 +20,13 @@ app.secret_key = "smart_waste_secret_key"
 # ==================================================
 
 def is_hashed(password):
-
     return password.startswith(("scrypt:", "pbkdf2:"))
 
 
 def verify_password(stored_password, entered_password):
-
-    # Hashed password ho to hash se check karo,
-    # purana plain text ho to seedha compare karo
+    # If the password is hashed, verify it with the hash.
+    # If it is an old plain text password, compare it directly.
     if is_hashed(stored_password):
-
         return check_password_hash(stored_password, entered_password)
 
     return stored_password == entered_password
@@ -55,46 +52,23 @@ database.create_database()
 
 
 # Add new columns if they do not already exist
-
 try:
-
     connection = sqlite3.connect("waste_system.db")
     cursor = connection.cursor()
 
-    # Add submitted_at column
-    try:
-        cursor.execute("""
-            ALTER TABLE waste_reports
-            ADD COLUMN submitted_at TEXT
-        """)
-    except sqlite3.OperationalError:
-        pass
-
-    # Add after_photo column
-    try:
-        cursor.execute("""
-            ALTER TABLE waste_reports
-            ADD COLUMN after_photo TEXT
-        """)
-    except sqlite3.OperationalError:
-        pass
-
-    # Add tracking_number column
-    try:
-        cursor.execute("""
-            ALTER TABLE waste_reports
-            ADD COLUMN tracking_number TEXT
-        """)
-    except sqlite3.OperationalError:
-        pass
-
-    # Add latitude and longitude columns
-    for column in ("latitude", "longitude"):
+    for column, column_type in (
+        ("submitted_at", "TEXT"),
+        ("after_photo", "TEXT"),
+        ("tracking_number", "TEXT"),
+        ("latitude", "REAL"),
+        ("longitude", "REAL"),
+    ):
         try:
             cursor.execute(
-                f"ALTER TABLE waste_reports ADD COLUMN {column} REAL"
+                f"ALTER TABLE waste_reports ADD COLUMN {column} {column_type}"
             )
         except sqlite3.OperationalError:
+            # The column already exists
             pass
 
     # Create report counter table
@@ -107,8 +81,7 @@ try:
 
     # Start tracking numbers from 1
     cursor.execute("""
-        INSERT OR IGNORE INTO report_counter
-        (id, next_number)
+        INSERT OR IGNORE INTO report_counter (id, next_number)
         VALUES (1, 1)
     """)
 
@@ -124,20 +97,14 @@ except sqlite3.OperationalError:
 # ==================================================
 
 def hash_existing_passwords():
-
     connection = sqlite3.connect("waste_system.db")
     cursor = connection.cursor()
 
     for table in ("users", "admins"):
-
         cursor.execute(f"SELECT id, password FROM {table}")
 
-        rows = cursor.fetchall()
-
-        for row_id, password in rows:
-
+        for row_id, password in cursor.fetchall():
             if password and not is_hashed(password):
-
                 cursor.execute(
                     f"UPDATE {table} SET password = ? WHERE id = ?",
                     (generate_password_hash(password), row_id)
@@ -156,12 +123,11 @@ hash_existing_passwords()
 
 @app.route("/")
 def home():
-
     return render_template("index.html")
 
 
 # ==================================================
-# LOGIN
+# SINGLE LOGIN (ADMIN AND USER)
 # ==================================================
 
 @app.route("/login", methods=["GET", "POST"])
@@ -175,21 +141,38 @@ def login():
         connection = sqlite3.connect("waste_system.db")
         cursor = connection.cursor()
 
+        # Step 1: check the admins table first
         cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE LOWER(email) = ?
-        """, (
-            email,
-        ))
+            SELECT * FROM admins WHERE LOWER(email) = ?
+        """, (email,))
+
+        admin = cursor.fetchone()
+
+        # admin columns: id, name, email, password
+        if admin and verify_password(admin[3], password):
+
+            connection.close()
+
+            session.clear()
+            session["admin_id"] = admin[0]
+            session["admin_name"] = admin[1]
+            session["admin_email"] = admin[2]
+
+            return redirect(url_for("admin_dashboard"))
+
+        # Step 2: check the users table
+        cursor.execute("""
+            SELECT * FROM users WHERE LOWER(email) = ?
+        """, (email,))
 
         user = cursor.fetchone()
 
         connection.close()
 
-        # user[4] = password
+        # user columns: id, name, email, phone, password
         if user and verify_password(user[4], password):
 
+            session.clear()
             session["user_id"] = user[0]
             session["user_name"] = user[1]
             session["user_email"] = user[2]
@@ -199,14 +182,18 @@ def login():
                 message="Login successful!"
             )
 
-        else:
-
-            return render_template(
-                "login.html",
-                message="Invalid email or password."
-            )
+        return render_template(
+            "login.html",
+            message="Invalid email or password."
+        )
 
     return render_template("login.html")
+
+
+# The old admin login URL now opens the single login page
+@app.route("/admin-login")
+def admin_login():
+    return redirect(url_for("login"))
 
 
 # ==================================================
@@ -227,16 +214,19 @@ def register():
         cursor = connection.cursor()
 
         cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE LOWER(email) = ?
-        """, (
-            email,
-        ))
+            SELECT id FROM users WHERE LOWER(email) = ?
+        """, (email,))
 
         existing_user = cursor.fetchone()
 
-        if existing_user:
+        # An admin email cannot be used for a user account
+        cursor.execute("""
+            SELECT id FROM admins WHERE LOWER(email) = ?
+        """, (email,))
+
+        existing_admin = cursor.fetchone()
+
+        if existing_user or existing_admin:
 
             connection.close()
 
@@ -246,15 +236,9 @@ def register():
             )
 
         cursor.execute("""
-            INSERT INTO users
-            (name, email, phone, password)
+            INSERT INTO users (name, email, phone, password)
             VALUES (?, ?, ?, ?)
-        """, (
-            name,
-            email,
-            phone,
-            generate_password_hash(password)
-        ))
+        """, (name, email, phone, generate_password_hash(password)))
 
         connection.commit()
         connection.close()
@@ -268,7 +252,7 @@ def register():
 
 
 # ==================================================
-# FORGOT PASSWORD
+# FORGOT PASSWORD (USER)
 # ==================================================
 
 @app.route("/forgot-password", methods=["GET", "POST"])
@@ -282,19 +266,14 @@ def forgot_password():
         cursor = connection.cursor()
 
         cursor.execute("""
-            SELECT *
-            FROM users
-            WHERE LOWER(email) = ?
-        """, (
-            email,
-        ))
+            SELECT id FROM users WHERE LOWER(email) = ?
+        """, (email,))
 
         user = cursor.fetchone()
 
         connection.close()
 
         if not user:
-
             return render_template(
                 "forgot_password.html",
                 message="Email not found."
@@ -314,44 +293,27 @@ def forgot_password():
     return render_template("forgot_password.html")
 
 
-# ==================================================
-# VERIFY OTP
-# ==================================================
-
 @app.route("/verify-otp", methods=["GET", "POST"])
 def verify_otp():
 
     if request.method == "POST":
 
         entered_otp = request.form["otp"]
-
         saved_otp = session.get("reset_otp")
 
         if saved_otp and entered_otp == saved_otp:
-
             session["otp_verified"] = True
-
             return redirect(url_for("reset_password"))
 
-        else:
-
-            return render_template(
-                "verify_otp.html",
-                message="Invalid OTP."
-            )
+        return render_template("verify_otp.html", message="Invalid OTP.")
 
     return render_template("verify_otp.html")
 
-
-# ==================================================
-# RESET PASSWORD
-# ==================================================
 
 @app.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
 
     if not session.get("otp_verified"):
-
         return "Please verify OTP first."
 
     if request.method == "POST":
@@ -360,14 +322,12 @@ def reset_password():
         confirm_password = request.form["confirm_password"]
 
         if new_password != confirm_password:
-
             return render_template(
                 "reset_password.html",
                 message="Passwords do not match."
             )
 
         if new_password == "":
-
             return render_template(
                 "reset_password.html",
                 message="Password cannot be empty."
@@ -379,13 +339,8 @@ def reset_password():
         cursor = connection.cursor()
 
         cursor.execute("""
-            UPDATE users
-            SET password = ?
-            WHERE LOWER(email) = ?
-        """, (
-            generate_password_hash(new_password),
-            email
-        ))
+            UPDATE users SET password = ? WHERE LOWER(email) = ?
+        """, (generate_password_hash(new_password), email))
 
         connection.commit()
         connection.close()
@@ -410,7 +365,6 @@ def reset_password():
 def change_password():
 
     if not session.get("user_id"):
-
         return "Please login before changing your password."
 
     if request.method == "POST":
@@ -423,59 +377,42 @@ def change_password():
         cursor = connection.cursor()
 
         cursor.execute("""
-            SELECT password
-            FROM users
-            WHERE id = ?
-        """, (
-            session["user_id"],
-        ))
+            SELECT password FROM users WHERE id = ?
+        """, (session["user_id"],))
 
         user = cursor.fetchone()
 
         if not user:
-
             connection.close()
-
             return render_template(
                 "change_password.html",
                 message="User account not found."
             )
 
         if not verify_password(user[0], current_password):
-
             connection.close()
-
             return render_template(
                 "change_password.html",
                 message="Current password is incorrect."
             )
 
         if new_password == "":
-
             connection.close()
-
             return render_template(
                 "change_password.html",
                 message="New password cannot be empty."
             )
 
         if new_password != confirm_password:
-
             connection.close()
-
             return render_template(
                 "change_password.html",
                 message="New passwords do not match."
             )
 
         cursor.execute("""
-            UPDATE users
-            SET password = ?
-            WHERE id = ?
-        """, (
-            generate_password_hash(new_password),
-            session["user_id"]
-        ))
+            UPDATE users SET password = ? WHERE id = ?
+        """, (generate_password_hash(new_password), session["user_id"]))
 
         connection.commit()
         connection.close()
@@ -510,7 +447,6 @@ def logout():
 def report():
 
     if not session.get("user_id"):
-
         return "Please login before submitting a report."
 
     if request.method == "POST":
@@ -534,13 +470,7 @@ def report():
 
         filename = None
 
-        allowed_extensions = {
-            "jpg",
-            "jpeg",
-            "png",
-            "gif",
-            "webp"
-        }
+        allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
 
         if photo and photo.filename:
 
@@ -549,11 +479,9 @@ def report():
             extension = ""
 
             if "." in original_filename:
-
                 extension = original_filename.rsplit(".", 1)[1].lower()
 
             if extension not in allowed_extensions:
-
                 return render_template(
                     "report.html",
                     message="Invalid photo format. Please upload JPG, JPEG, PNG, GIF or WEBP."
@@ -570,24 +498,17 @@ def report():
             )
 
             photo.save(
-                os.path.join(
-                    app.config["UPLOAD_FOLDER"],
-                    filename
-                )
+                os.path.join(app.config["UPLOAD_FOLDER"], filename)
             )
 
-        submitted_at = datetime.now().strftime(
-            "%d-%m-%Y %I:%M %p"
-        )
+        submitted_at = datetime.now().strftime("%d-%m-%Y %I:%M %p")
 
         connection = sqlite3.connect("waste_system.db")
         cursor = connection.cursor()
 
-        # Get next unique tracking number
+        # Get the next unique tracking number
         cursor.execute("""
-            SELECT next_number
-            FROM report_counter
-            WHERE id = 1
+            SELECT next_number FROM report_counter WHERE id = 1
         """)
 
         counter = cursor.fetchone()
@@ -596,29 +517,18 @@ def report():
 
         tracking_number = f"WR{next_number:03d}"
 
-        # Increase counter
+        # Increase the counter
         cursor.execute("""
-            UPDATE report_counter
-            SET next_number = ?
-            WHERE id = 1
-        """, (
-            next_number + 1,
-        ))
+            UPDATE report_counter SET next_number = ? WHERE id = 1
+        """, (next_number + 1,))
 
-        # Insert report
+        # Insert the report
         cursor.execute("""
             INSERT INTO waste_reports
             (
-                user_id,
-                waste_type,
-                location,
-                description,
-                photo,
-                status,
-                submitted_at,
-                tracking_number,
-                latitude,
-                longitude
+                user_id, waste_type, location, description,
+                photo, status, submitted_at, tracking_number,
+                latitude, longitude
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
@@ -671,22 +581,11 @@ def track():
 
         cursor.execute("""
             SELECT
-                id,
-                waste_type,
-                location,
-                description,
-                photo,
-                status,
-                submitted_at,
-                after_photo,
-                tracking_number
+                id, waste_type, location, description, photo,
+                status, submitted_at, after_photo, tracking_number
             FROM waste_reports
-            WHERE tracking_number = ?
-            AND user_id = ?
-        """, (
-            tracking_number,
-            session["user_id"]
-        ))
+            WHERE tracking_number = ? AND user_id = ?
+        """, (tracking_number, session["user_id"]))
 
         result = cursor.fetchone()
 
@@ -695,11 +594,7 @@ def track():
         if not result:
             message = "Report not found. Please check your Tracking Number."
 
-    return render_template(
-        "track.html",
-        result=result,
-        message=message
-    )
+    return render_template("track.html", result=result, message=message)
 
 
 # ==================================================
@@ -710,7 +605,6 @@ def track():
 def my_reports():
 
     if not session.get("user_id"):
-
         return "Please login before viewing your reports."
 
     connection = sqlite3.connect("waste_system.db")
@@ -718,30 +612,18 @@ def my_reports():
 
     cursor.execute("""
         SELECT
-            id,
-            waste_type,
-            location,
-            description,
-            photo,
-            status,
-            submitted_at,
-            after_photo,
-            tracking_number
+            id, waste_type, location, description, photo,
+            status, submitted_at, after_photo, tracking_number
         FROM waste_reports
         WHERE user_id = ?
         ORDER BY id DESC
-    """, (
-        session["user_id"],
-    ))
+    """, (session["user_id"],))
 
     reports = cursor.fetchall()
 
     connection.close()
 
-    return render_template(
-        "my_reports.html",
-        reports=reports
-    )
+    return render_template("my_reports.html", reports=reports)
 
 
 # ==================================================
@@ -750,87 +632,26 @@ def my_reports():
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):
-
-    return send_from_directory(
-        app.config["UPLOAD_FOLDER"],
-        filename
-    )
+    return send_from_directory(app.config["UPLOAD_FOLDER"], filename)
 
 
 # ==================================================
-# ABOUT
+# ABOUT, FAQ, CONTACT
 # ==================================================
 
 @app.route("/about")
 def about():
-
     return render_template("about.html")
 
 
-# ==================================================
-# FAQ
-# ==================================================
-
 @app.route("/faq")
 def faq():
-
     return render_template("faq.html")
 
 
-# ==================================================
-# CONTACT
-# ==================================================
-
 @app.route("/contact")
 def contact():
-
     return render_template("contact.html")
-
-
-# ==================================================
-# ADMIN LOGIN
-# ==================================================
-
-@app.route("/admin-login", methods=["GET", "POST"])
-def admin_login():
-
-    if request.method == "POST":
-
-        email = request.form["email"].strip().lower()
-        password = request.form["password"]
-
-        connection = sqlite3.connect("waste_system.db")
-        cursor = connection.cursor()
-
-        cursor.execute("""
-            SELECT *
-            FROM admins
-            WHERE LOWER(email) = ?
-        """, (
-            email,
-        ))
-
-        admin = cursor.fetchone()
-
-        connection.close()
-
-        # admin[3] = password
-        if admin and verify_password(admin[3], password):
-
-            session["admin_id"] = admin[0]
-            session["admin_name"] = admin[1]
-            session["admin_email"] = admin[2]
-
-            return redirect(url_for("admin_dashboard"))
-
-        else:
-
-            return render_template(
-                "admin_login.html",
-                message="Invalid admin email or password."
-            )
-
-    return render_template("admin_login.html")
 
 
 # ==================================================
@@ -848,19 +669,14 @@ def admin_forgot_password():
         cursor = connection.cursor()
 
         cursor.execute("""
-            SELECT id
-            FROM admins
-            WHERE LOWER(email) = ?
-        """, (
-            email,
-        ))
+            SELECT id FROM admins WHERE LOWER(email) = ?
+        """, (email,))
 
         admin = cursor.fetchone()
 
         connection.close()
 
         if not admin:
-
             return render_template(
                 "admin_forgot_password.html",
                 message="Admin email not found."
@@ -880,48 +696,30 @@ def admin_forgot_password():
     return render_template("admin_forgot_password.html")
 
 
-# ==================================================
-# ADMIN VERIFY OTP
-# ==================================================
-
 @app.route("/admin-verify-otp", methods=["GET", "POST"])
 def admin_verify_otp():
 
     if not session.get("admin_reset_email"):
-
         return redirect(url_for("admin_forgot_password"))
 
     if request.method == "POST":
 
         entered_otp = request.form["otp"]
-
         saved_otp = session.get("admin_reset_otp")
 
         if saved_otp and entered_otp == saved_otp:
-
             session["admin_otp_verified"] = True
-
             return redirect(url_for("admin_reset_password"))
 
-        else:
-
-            return render_template(
-                "admin_verify_otp.html",
-                message="Invalid OTP."
-            )
+        return render_template("admin_verify_otp.html", message="Invalid OTP.")
 
     return render_template("admin_verify_otp.html")
 
-
-# ==================================================
-# ADMIN RESET PASSWORD
-# ==================================================
 
 @app.route("/admin-reset-password", methods=["GET", "POST"])
 def admin_reset_password():
 
     if not session.get("admin_otp_verified"):
-
         return "Please verify OTP first."
 
     if request.method == "POST":
@@ -930,14 +728,12 @@ def admin_reset_password():
         confirm_password = request.form["confirm_password"]
 
         if new_password == "":
-
             return render_template(
                 "admin_reset_password.html",
                 message="Password cannot be empty."
             )
 
         if new_password != confirm_password:
-
             return render_template(
                 "admin_reset_password.html",
                 message="Passwords do not match."
@@ -949,13 +745,8 @@ def admin_reset_password():
         cursor = connection.cursor()
 
         cursor.execute("""
-            UPDATE admins
-            SET password = ?
-            WHERE LOWER(email) = ?
-        """, (
-            generate_password_hash(new_password),
-            email
-        ))
+            UPDATE admins SET password = ? WHERE LOWER(email) = ?
+        """, (generate_password_hash(new_password), email))
 
         connection.commit()
         connection.close()
@@ -965,7 +756,7 @@ def admin_reset_password():
         session.pop("admin_otp_verified", None)
 
         return render_template(
-            "admin_login.html",
+            "login.html",
             message="Admin password reset successfully! Please login."
         )
 
@@ -983,7 +774,7 @@ def admin_logout():
     session.pop("admin_name", None)
     session.pop("admin_email", None)
 
-    return redirect(url_for("admin_login"))
+    return redirect(url_for("login"))
 
 
 # ==================================================
@@ -1012,8 +803,7 @@ def get_reports():
             waste_reports.latitude,
             waste_reports.longitude
         FROM waste_reports
-        LEFT JOIN users
-        ON waste_reports.user_id = users.id
+        LEFT JOIN users ON waste_reports.user_id = users.id
         ORDER BY waste_reports.id DESC
     """)
 
@@ -1032,8 +822,7 @@ def get_reports():
 def admin_dashboard():
 
     if not session.get("admin_id"):
-
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
     reports = get_reports()
 
@@ -1048,15 +837,10 @@ def admin_dashboard():
         status = report[8]
 
         if status == "Pending":
-
             pending_reports += 1
-
         elif status == "In Progress":
-
             progress_reports += 1
-
         elif status == "Resolved":
-
             resolved_reports += 1
 
     return render_template(
@@ -1077,8 +861,7 @@ def admin_dashboard():
 def update_status():
 
     if not session.get("admin_id"):
-
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
     report_id = request.form["report_id"]
     status = request.form["status"]
@@ -1087,13 +870,8 @@ def update_status():
     cursor = connection.cursor()
 
     cursor.execute("""
-        UPDATE waste_reports
-        SET status = ?
-        WHERE id = ?
-    """, (
-        status,
-        report_id
-    ))
+        UPDATE waste_reports SET status = ? WHERE id = ?
+    """, (status, report_id))
 
     connection.commit()
     connection.close()
@@ -1109,31 +887,21 @@ def update_status():
 def admin_upload_after_photo(report_id):
 
     if not session.get("admin_id"):
-
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
     photo = request.files.get("after_photo")
 
     if not photo or photo.filename == "":
-
         return redirect(url_for("admin_dashboard"))
 
-    allowed_extensions = {
-        "jpg",
-        "jpeg",
-        "png",
-        "gif",
-        "webp"
-    }
+    allowed_extensions = {"jpg", "jpeg", "png", "gif", "webp"}
 
     if "." not in photo.filename:
-
         return redirect(url_for("admin_dashboard"))
 
     extension = photo.filename.rsplit(".", 1)[1].lower()
 
     if extension not in allowed_extensions:
-
         return redirect(url_for("admin_dashboard"))
 
     original_filename = secure_filename(photo.filename)
@@ -1144,24 +912,14 @@ def admin_upload_after_photo(report_id):
         f"{original_filename}"
     )
 
-    photo_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        unique_filename
-    )
-
-    photo.save(photo_path)
+    photo.save(os.path.join(app.config["UPLOAD_FOLDER"], unique_filename))
 
     connection = sqlite3.connect("waste_system.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-        UPDATE waste_reports
-        SET after_photo = ?
-        WHERE id = ?
-    """, (
-        unique_filename,
-        report_id
-    ))
+        UPDATE waste_reports SET after_photo = ? WHERE id = ?
+    """, (unique_filename, report_id))
 
     connection.commit()
     connection.close()
@@ -1177,64 +935,41 @@ def admin_upload_after_photo(report_id):
 def admin_delete_report(report_id):
 
     if not session.get("admin_id"):
-
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
     connection = sqlite3.connect("waste_system.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT photo, after_photo
-        FROM waste_reports
-        WHERE id = ?
-    """, (
-        report_id,
-    ))
+        SELECT photo, after_photo FROM waste_reports WHERE id = ?
+    """, (report_id,))
 
     report = cursor.fetchone()
 
     if not report:
-
         connection.close()
-
         return "Report not found."
 
     before_photo = report[0]
     after_photo = report[1]
 
-    cursor.execute("""
-        DELETE FROM waste_reports
-        WHERE id = ?
-    """, (
-        report_id,
-    ))
+    cursor.execute("DELETE FROM waste_reports WHERE id = ?", (report_id,))
 
     connection.commit()
     connection.close()
 
-    # Delete before-cleaning photo
-    if before_photo:
+    # Delete the before-cleaning and after-cleaning photos
+    for photo_name in (before_photo, after_photo):
 
-        photo_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            before_photo
-        )
+        if photo_name:
 
-        if os.path.exists(photo_path):
+            photo_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                photo_name
+            )
 
-            os.remove(photo_path)
-
-    # Delete after-cleaning photo
-    if after_photo:
-
-        after_photo_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            after_photo
-        )
-
-        if os.path.exists(after_photo_path):
-
-            os.remove(after_photo_path)
+            if os.path.exists(photo_path):
+                os.remove(photo_path)
 
     return redirect(url_for("admin_dashboard"))
 
@@ -1247,8 +982,7 @@ def admin_delete_report(report_id):
 def admin_settings():
 
     if not session.get("admin_id"):
-
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
     if request.method == "POST":
 
@@ -1260,59 +994,42 @@ def admin_settings():
         cursor = connection.cursor()
 
         cursor.execute("""
-            SELECT password
-            FROM admins
-            WHERE id = ?
-        """, (
-            session["admin_id"],
-        ))
+            SELECT password FROM admins WHERE id = ?
+        """, (session["admin_id"],))
 
         admin = cursor.fetchone()
 
         if not admin:
-
             connection.close()
-
             return render_template(
                 "admin_settings.html",
                 message="Admin account not found."
             )
 
         if not verify_password(admin[0], current_password):
-
             connection.close()
-
             return render_template(
                 "admin_settings.html",
                 message="Current password is incorrect."
             )
 
         if new_password == "":
-
             connection.close()
-
             return render_template(
                 "admin_settings.html",
                 message="New password cannot be empty."
             )
 
         if new_password != confirm_password:
-
             connection.close()
-
             return render_template(
                 "admin_settings.html",
                 message="New passwords do not match."
             )
 
         cursor.execute("""
-            UPDATE admins
-            SET password = ?
-            WHERE id = ?
-        """, (
-            generate_password_hash(new_password),
-            session["admin_id"]
-        ))
+            UPDATE admins SET password = ? WHERE id = ?
+        """, (generate_password_hash(new_password), session["admin_id"]))
 
         connection.commit()
         connection.close()
@@ -1333,8 +1050,7 @@ def admin_settings():
 def database_check():
 
     if not session.get("admin_id"):
-
-        return redirect(url_for("admin_login"))
+        return redirect(url_for("login"))
 
     connection = sqlite3.connect("waste_system.db")
     cursor = connection.cursor()
@@ -1359,5 +1075,4 @@ def database_check():
 # ==================================================
 
 if __name__ == "__main__":
-
     app.run(debug=True)
