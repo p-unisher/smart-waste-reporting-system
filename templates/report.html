@@ -15,6 +15,7 @@
 textarea{resize:vertical}
 .remove-photo-button{margin-top:10px;padding:8px 15px;background:#d32f2f;color:#fff;border:none;border-radius:5px;cursor:pointer}
 .location-button{margin-top:5px;padding:10px 15px;background:#1565c0;color:#fff;border:none;border-radius:5px;cursor:pointer}
+.location-button:disabled{background:#90a4ae;cursor:wait}
 .location-ok{color:#2e7d32}
 .location-error{color:#d32f2f}
 </style>
@@ -71,12 +72,14 @@ textarea{resize:vertical}
 
   <label for="location">Location <span class="required-text">*</span></label>
   <input type="text" id="location" name="location" placeholder="Example: Taki Road, Nallasopara" required>
-  <p class="field-help">Enter the place where the waste is located.</p>
 
   <input type="hidden" name="latitude" id="latitude">
   <input type="hidden" name="longitude" id="longitude">
-  <button type="button" id="locBtn" class="location-button">📍 Use my live location</button>
-  <p class="field-help" id="locStatus">Location not captured (optional).</p>
+
+  <button type="button" id="locBtn" class="location-button">📍 Use my current location</button>
+  <p class="field-help" id="locStatus">
+    Button dabane par aapka address apne aap bhar jayega. Aap use edit bhi kar sakte hain.
+  </p>
 
   <label for="description">Description <span class="required-text">*</span></label>
   <textarea id="description" name="description" rows="5" maxlength="500"
@@ -105,6 +108,7 @@ textarea{resize:vertical}
 </footer>
 
 <script>
+/* ---------- Photo Preview ---------- */
 const photoInput = document.getElementById("photo");
 const photoPreview = document.getElementById("photoPreview");
 const previewImage = document.getElementById("previewImage");
@@ -127,39 +131,105 @@ removePhoto.addEventListener("click", function () {
   photoPreview.style.display = "none";
 });
 
-let watchId = null;
+
+/* ---------- Current Location + Address ---------- */
 const locBtn = document.getElementById("locBtn");
 const locStatus = document.getElementById("locStatus");
 const latInput = document.getElementById("latitude");
 const lngInput = document.getElementById("longitude");
+const locationInput = document.getElementById("location");
+
+function showStatus(text, cssClass) {
+  locStatus.textContent = text;
+  locStatus.className = "field-help " + (cssClass || "");
+}
+
+async function getAddress(lat, lng) {
+  const url =
+    "https://nominatim.openstreetmap.org/reverse?format=jsonv2" +
+    "&lat=" + lat + "&lon=" + lng +
+    "&zoom=18&addressdetails=1&accept-language=en";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error("Address service error");
+  }
+
+  const data = await response.json();
+
+  if (!data || !data.display_name) {
+    throw new Error("Address not found");
+  }
+
+  return data.display_name;
+}
 
 locBtn.addEventListener("click", function () {
+
   if (!navigator.geolocation) {
-    locStatus.textContent = "Your browser does not support location.";
-    locStatus.className = "field-help location-error";
+    showStatus("Your browser does not support location.", "location-error");
     return;
   }
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
-  locStatus.textContent = "Getting your location...";
-  locStatus.className = "field-help";
 
-  watchId = navigator.geolocation.watchPosition(
-    function (pos) {
-      latInput.value = pos.coords.latitude;
-      lngInput.value = pos.coords.longitude;
-      locStatus.textContent = "Location captured (accuracy ~" + Math.round(pos.coords.accuracy) + " m)";
-      locStatus.className = "field-help location-ok";
+  locBtn.disabled = true;
+  showStatus("Getting your location...", "");
+
+  navigator.geolocation.getCurrentPosition(
+
+    async function (position) {
+
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = Math.round(position.coords.accuracy);
+
+      latInput.value = lat;
+      lngInput.value = lng;
+
+      showStatus("Location mil gayi, address dhoondh rahe hain...", "");
+
+      try {
+
+        const address = await getAddress(lat, lng);
+
+        locationInput.value = address;
+
+        showStatus(
+          "Address mil gaya (accuracy ~" + accuracy + " m). Zaroorat ho to edit kar sakte hain.",
+          "location-ok"
+        );
+
+      } catch (error) {
+
+        showStatus(
+          "GPS location save ho gayi (accuracy ~" + accuracy +
+          " m), par address nahi mila. Kripya address khud likhein.",
+          "location-error"
+        );
+
+      }
+
+      locBtn.disabled = false;
+
     },
-    function (err) {
-      locStatus.textContent = "Could not get location: " + err.message;
-      locStatus.className = "field-help location-error";
+
+    function (error) {
+
+      let text = "Could not get location: " + error.message;
+
+      if (error.code === 1) {
+        text = "Location permission band hai. Browser me Allow karein aur dobara try karein.";
+      }
+
+      showStatus(text, "location-error");
+      locBtn.disabled = false;
+
     },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+
   );
-});
 
-document.querySelector("form").addEventListener("submit", function () {
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
 });
 </script>
 
