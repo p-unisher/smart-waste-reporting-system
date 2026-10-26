@@ -22,6 +22,7 @@ textarea{resize:vertical}
 </head>
 <body>
 
+<!-- Header -->
 <header>
   <div class="logo">📚 Smart Waste Reporting System</div>
   <nav>
@@ -43,6 +44,7 @@ textarea{resize:vertical}
   </div>
 </header>
 
+<!-- Report Form -->
 <section class="form-page">
 <div class="form-box">
 
@@ -53,12 +55,14 @@ textarea{resize:vertical}
   Fields marked with <span class="required-text">*</span> are required.
 </p>
 
+<!-- Error message -->
 {% if message %}
 <p style="text-align:center;color:red;">{{ message }}</p>
 {% endif %}
 
 <form action="/report" method="POST" enctype="multipart/form-data">
 
+  <!-- Waste type -->
   <label for="waste_type">Waste Type <span class="required-text">*</span></label>
   <select id="waste_type" name="waste_type" required>
     <option value="">Select Waste Type</option>
@@ -70,51 +74,59 @@ textarea{resize:vertical}
     <option value="Other">Other</option>
   </select>
 
+  <!-- Location -->
   <label for="location">Location <span class="required-text">*</span></label>
   <input type="text" id="location" name="location" placeholder="Example: Taki Road, Nallasopara" required>
 
+  <!-- Hidden GPS fields, sent to the server with the form -->
   <input type="hidden" name="latitude" id="latitude">
   <input type="hidden" name="longitude" id="longitude">
 
   <button type="button" id="locBtn" class="location-button">📍 Use my current location</button>
   <p class="field-help" id="locStatus">
-    Button dabane par aapka address apne aap bhar jayega. Aap use edit bhi kar sakte hain.
+    Click the button and the exact place name and address will be filled in automatically. You can edit it if needed.
   </p>
 
+  <!-- Description -->
   <label for="description">Description <span class="required-text">*</span></label>
   <textarea id="description" name="description" rows="5" maxlength="500"
     placeholder="Example: Large amount of garbage is lying near the road." required></textarea>
   <p class="field-help">Briefly explain what type of waste is present and the problem. Maximum 500 characters.</p>
 
+  <!-- Waste photo -->
   <label for="photo">Upload Waste Photo <span class="required-text">*</span></label>
   <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/webp" required>
   <p class="field-help">Upload a clear photo showing the waste problem.</p>
 
+  <!-- Photo preview -->
   <div class="photo-preview" id="photoPreview">
     <img id="previewImage" src="" alt="Selected Waste Photo">
     <p class="photo-name" id="photoName"></p>
     <button type="button" id="removePhoto" class="remove-photo-button">Remove Photo</button>
   </div>
 
+  <!-- Submit -->
   <button type="submit">Submit Report</button>
 
 </form>
 </div>
 </section>
 
+<!-- Footer -->
 <footer>
   <p>© 2026 Smart Waste Reporting System</p>
   <p>Together for a Cleaner and Greener City</p>
 </footer>
 
 <script>
-/* ---------- Photo Preview ---------- */
+/* ---------- Photo preview ---------- */
 const photoInput = document.getElementById("photo");
 const photoPreview = document.getElementById("photoPreview");
 const previewImage = document.getElementById("previewImage");
 const photoName = document.getElementById("photoName");
 const removePhoto = document.getElementById("removePhoto");
 
+// Show the selected photo
 photoInput.addEventListener("change", function () {
   const file = this.files[0];
   if (file) {
@@ -124,6 +136,7 @@ photoInput.addEventListener("change", function () {
   }
 });
 
+// Remove the selected photo
 removePhoto.addEventListener("click", function () {
   photoInput.value = "";
   previewImage.src = "";
@@ -132,106 +145,6 @@ removePhoto.addEventListener("click", function () {
 });
 
 
-/* ---------- Current Location + Address ---------- */
+/* ---------- Current location and address ---------- */
 const locBtn = document.getElementById("locBtn");
-const locStatus = document.getElementById("locStatus");
-const latInput = document.getElementById("latitude");
-const lngInput = document.getElementById("longitude");
-const locationInput = document.getElementById("location");
-
-function showStatus(text, cssClass) {
-  locStatus.textContent = text;
-  locStatus.className = "field-help " + (cssClass || "");
-}
-
-async function getAddress(lat, lng) {
-  const url =
-    "https://nominatim.openstreetmap.org/reverse?format=jsonv2" +
-    "&lat=" + lat + "&lon=" + lng +
-    "&zoom=18&addressdetails=1&accept-language=en";
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Address service error");
-  }
-
-  const data = await response.json();
-
-  if (!data || !data.display_name) {
-    throw new Error("Address not found");
-  }
-
-  return data.display_name;
-}
-
-locBtn.addEventListener("click", function () {
-
-  if (!navigator.geolocation) {
-    showStatus("Your browser does not support location.", "location-error");
-    return;
-  }
-
-  locBtn.disabled = true;
-  showStatus("Getting your location...", "");
-
-  navigator.geolocation.getCurrentPosition(
-
-    async function (position) {
-
-      const lat = position.coords.latitude;
-      const lng = position.coords.longitude;
-      const accuracy = Math.round(position.coords.accuracy);
-
-      latInput.value = lat;
-      lngInput.value = lng;
-
-      showStatus("Location mil gayi, address dhoondh rahe hain...", "");
-
-      try {
-
-        const address = await getAddress(lat, lng);
-
-        locationInput.value = address;
-
-        showStatus(
-          "Address mil gaya (accuracy ~" + accuracy + " m). Zaroorat ho to edit kar sakte hain.",
-          "location-ok"
-        );
-
-      } catch (error) {
-
-        showStatus(
-          "GPS location save ho gayi (accuracy ~" + accuracy +
-          " m), par address nahi mila. Kripya address khud likhein.",
-          "location-error"
-        );
-
-      }
-
-      locBtn.disabled = false;
-
-    },
-
-    function (error) {
-
-      let text = "Could not get location: " + error.message;
-
-      if (error.code === 1) {
-        text = "Location permission band hai. Browser me Allow karein aur dobara try karein.";
-      }
-
-      showStatus(text, "location-error");
-      locBtn.disabled = false;
-
-    },
-
-    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-
-  );
-
-});
-</script>
-
-</body>
-</html>
+const locStatus =
