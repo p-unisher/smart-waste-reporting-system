@@ -1,191 +1,167 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Report Waste - Smart Waste Reporting System</title>
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
-
-    <style>
-
-        .report-help {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .field-help {
-            color: #777;
-            font-size: 13px;
-            margin-top: 5px;
-            margin-bottom: 15px;
-        }
-
-        .photo-preview {
-            display: none;
-            margin-top: 15px;
-            text-align: center;
-        }
-
-        .photo-preview img {
-            width: 200px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-
-        .photo-name {
-            margin-top: 5px;
-            font-size: 13px;
-            color: #555;
-        }
-
-        .required-text {
-            color: #d32f2f;
-        }
-
-        textarea {
-            resize: vertical;
-        }
-
-        /* Remove Photo Button */
-
-        .remove-photo-button {
-            margin-top: 10px;
-            padding: 8px 15px;
-            background: #d32f2f;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .remove-photo-button:hover {
-            background: #b71c1c;
-        }
-
-        /* Live Location Button */
-
-        .location-button {
-            margin-top: 5px;
-            padding: 10px 15px;
-            background: #1565c0;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .location-button:hover {
-            background: #0d47a1;
-        }
-
-        .location-ok {
-            color: #2e7d32;
-        }
-
-        .location-error {
-            color: #d32f2f;
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Report Waste - Smart Waste Reporting System</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+.report-help{color:#666;font-size:14px;margin-bottom:20px}
+.field-help{color:#777;font-size:13px;margin-top:5px;margin-bottom:15px}
+.photo-preview{display:none;margin-top:15px;text-align:center}
+.photo-preview img{width:200px;height:150px;object-fit:cover;border-radius:8px;border:1px solid #ddd}
+.photo-name{margin-top:5px;font-size:13px;color:#555}
+.required-text{color:#d32f2f}
+textarea{resize:vertical}
+.remove-photo-button{margin-top:10px;padding:8px 15px;background:#d32f2f;color:#fff;border:none;border-radius:5px;cursor:pointer}
+.location-button{margin-top:5px;padding:10px 15px;background:#1565c0;color:#fff;border:none;border-radius:5px;cursor:pointer}
+.location-ok{color:#2e7d32}
+.location-error{color:#d32f2f}
+</style>
 </head>
-
 <body>
 
-    <!-- Header -->
+<header>
+  <div class="logo">📚 Smart Waste Reporting System</div>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/report">Report Waste</a>
+    <a href="/track">Track Status</a>
+    <a href="/faq">FAQs</a>
+    <a href="/contact">Contact</a>
+  </nav>
+  <div>
+    {% if session.get("user_id") %}
+      <span>Welcome, {{ session.get("user_name") }}</span>
+      <a href="/logout" class="login-btn">Logout</a>
+    {% else %}
+      <a href="/login" class="login-btn">Login</a>
+      <a href="/register" class="register-btn">Register</a>
+    {% endif %}
+  </div>
+</header>
 
-    <header>
+<section class="form-page">
+<div class="form-box">
 
-        <div class="logo">
-            📚 Smart Waste Reporting System
-        </div>
+<h2>Report Waste</h2>
 
-        <nav>
+<p class="report-help">
+  Please provide accurate information about the waste problem.
+  Fields marked with <span class="required-text">*</span> are required.
+</p>
 
-            <a href="/">Home</a>
-            <a href="/about">About</a>
-            <a href="/report">Report Waste</a>
-            <a href="/track">Track Status</a>
-            <a href="/faq">FAQs</a>
-            <a href="/contact">Contact</a>
+{% if message %}
+<p style="text-align:center;color:red;">{{ message }}</p>
+{% endif %}
 
-        </nav>
+<form action="/report" method="POST" enctype="multipart/form-data">
 
+  <label for="waste_type">Waste Type <span class="required-text">*</span></label>
+  <select id="waste_type" name="waste_type" required>
+    <option value="">Select Waste Type</option>
+    <option value="Garbage">Garbage</option>
+    <option value="Plastic Waste">Plastic Waste</option>
+    <option value="Food Waste">Food Waste</option>
+    <option value="Construction Waste">Construction Waste</option>
+    <option value="Electronic Waste">Electronic Waste</option>
+    <option value="Other">Other</option>
+  </select>
 
-        <!-- Login / Logout -->
+  <label for="location">Location <span class="required-text">*</span></label>
+  <input type="text" id="location" name="location" placeholder="Example: Taki Road, Nallasopara" required>
+  <p class="field-help">Enter the place where the waste is located.</p>
 
-        <div>
+  <input type="hidden" name="latitude" id="latitude">
+  <input type="hidden" name="longitude" id="longitude">
+  <button type="button" id="locBtn" class="location-button">📍 Use my live location</button>
+  <p class="field-help" id="locStatus">Location not captured (optional).</p>
 
-            {% if session.get("user_id") %}
+  <label for="description">Description <span class="required-text">*</span></label>
+  <textarea id="description" name="description" rows="5" maxlength="500"
+    placeholder="Example: Large amount of garbage is lying near the road." required></textarea>
+  <p class="field-help">Briefly explain what type of waste is present and the problem. Maximum 500 characters.</p>
 
-                <span>
-                    Welcome, {{ session.get("user_name") }}
-                </span>
+  <label for="photo">Upload Waste Photo <span class="required-text">*</span></label>
+  <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/webp" required>
+  <p class="field-help">Upload a clear photo showing the waste problem.</p>
 
-                <a href="/logout" class="login-btn">
-                    Logout
-                </a>
+  <div class="photo-preview" id="photoPreview">
+    <img id="previewImage" src="" alt="Selected Waste Photo">
+    <p class="photo-name" id="photoName"></p>
+    <button type="button" id="removePhoto" class="remove-photo-button">Remove Photo</button>
+  </div>
 
-            {% else %}
+  <button type="submit">Submit Report</button>
 
-                <a href="/login" class="login-btn">
-                    Login
-                </a>
+</form>
+</div>
+</section>
 
-                <a href="/register" class="register-btn">
-                    Register
-                </a>
+<footer>
+  <p>© 2026 Smart Waste Reporting System</p>
+  <p>Together for a Cleaner and Greener City</p>
+</footer>
 
-            {% endif %}
+<script>
+const photoInput = document.getElementById("photo");
+const photoPreview = document.getElementById("photoPreview");
+const previewImage = document.getElementById("previewImage");
+const photoName = document.getElementById("photoName");
+const removePhoto = document.getElementById("removePhoto");
 
-        </div>
+photoInput.addEventListener("change", function () {
+  const file = this.files[0];
+  if (file) {
+    previewImage.src = URL.createObjectURL(file);
+    photoName.textContent = "Selected: " + file.name;
+    photoPreview.style.display = "block";
+  }
+});
 
-    </header>
+removePhoto.addEventListener("click", function () {
+  photoInput.value = "";
+  previewImage.src = "";
+  photoName.textContent = "";
+  photoPreview.style.display = "none";
+});
 
+let watchId = null;
+const locBtn = document.getElementById("locBtn");
+const locStatus = document.getElementById("locStatus");
+const latInput = document.getElementById("latitude");
+const lngInput = document.getElementById("longitude");
 
-    <!-- Report Form -->
+locBtn.addEventListener("click", function () {
+  if (!navigator.geolocation) {
+    locStatus.textContent = "Your browser does not support location.";
+    locStatus.className = "field-help location-error";
+    return;
+  }
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  locStatus.textContent = "Getting your location...";
+  locStatus.className = "field-help";
 
-    <section class="form-page">
+  watchId = navigator.geolocation.watchPosition(
+    function (pos) {
+      latInput.value = pos.coords.latitude;
+      lngInput.value = pos.coords.longitude;
+      locStatus.textContent = "Location captured (accuracy ~" + Math.round(pos.coords.accuracy) + " m)";
+      locStatus.className = "field-help location-ok";
+    },
+    function (err) {
+      locStatus.textContent = "Could not get location: " + err.message;
+      locStatus.className = "field-help location-error";
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+});
 
-        <div class="form-box">
+document.querySelector("form").addEventListener("submit", function () {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+});
+</script>
 
-            <h2>Report Waste</h2>
-
-            <p class="report-help">
-                Please provide accurate information about the waste problem.
-                Fields marked with <span class="required-text">*</span> are required.
-            </p>
-
-            <!-- Error Message -->
-            {% if message %}
-                <p style="text-align: center; color: red;">
-                    {{ message }}
-                </p>
-            {% endif %}
-
-
-            <form
-                action="/report"
-                method="POST"
-                enctype="multipart/form-data"
-            >
-
-                <!-- Waste Type -->
-
-                <label for="waste_type">
-                    Waste Type <span class="required-text">*</span>
-                </label>
-
-                <select
-                    id="waste_type"
-                    name="waste_type"
-                    required
-                >
-
-                    <option value="">Select Waste Type</option>
-                    <option
+</body>
+</html>
