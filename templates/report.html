@@ -1,15 +1,16 @@
-
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Report Waste - Smart Waste Reporting System</title>
 
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Waste - Smart Waste Reporting System</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
+
         .report-help {
             color: #666;
             font-size: 14px;
@@ -51,6 +52,8 @@
             resize: vertical;
         }
 
+        /* Remove Photo Button */
+
         .remove-photo-button {
             margin-top: 10px;
             padding: 8px 15px;
@@ -65,316 +68,124 @@
             background: #b71c1c;
         }
 
-        .gps-button {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            background: #167c45;
+        /* Live Location Button */
+
+        .location-button {
+            margin-top: 5px;
+            padding: 10px 15px;
+            background: #1565c0;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 15px;
         }
 
-        .gps-button:disabled {
-            opacity: 0.6;
+        .location-button:hover {
+            background: #0d47a1;
         }
 
-        .gps-status {
-            font-size: 13px;
-            margin-bottom: 15px;
-            overflow-wrap: anywhere;
+        .location-ok {
+            color: #2e7d32;
         }
 
-        .success-message {
-            color: #167c45;
+        .location-error {
+            color: #d32f2f;
         }
 
-        .error-message {
-            color: #c62828;
-        }
     </style>
 </head>
 
 <body>
 
-<header>
-    <div class="logo">
-        📚 Smart Waste Reporting System
-    </div>
+    <!-- Header -->
 
-    <nav>
-        <a href="/">Home</a>
-        <a href="/about">About</a>
-        <a href="/report">Report Waste</a>
-        <a href="/track">Track Status</a>
-        <a href="/faq">FAQs</a>
-        <a href="/contact">Contact</a>
-    </nav>
+    <header>
 
-    <div>
-        {% if session.get("user_id") %}
-            <span>Welcome, {{ session.get("user_name") }}</span>
-            <a href="/logout" class="login-btn">Logout</a>
-        {% else %}
-            <a href="/login" class="login-btn">Login</a>
-            <a href="/register" class="register-btn">Register</a>
-        {% endif %}
-    </div>
-</header>
+        <div class="logo">
+            📚 Smart Waste Reporting System
+        </div>
 
-<section class="form-page">
-    <div class="form-box">
+        <nav>
 
-        <h2>Report Waste</h2>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/report">Report Waste</a>
+            <a href="/track">Track Status</a>
+            <a href="/faq">FAQs</a>
+            <a href="/contact">Contact</a>
 
-        <p class="report-help">
-            Please provide accurate information about the waste problem.
-            Fields marked with <span class="required-text">*</span>
-            are required.
-        </p>
+        </nav>
 
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
 
-        {% if message %}
-            <p class="success-message">{{ message }}</p>
-        {% endif %}
+        <!-- Login / Logout -->
 
-        {% if tracking_number %}
-            <p>
-                <strong>Your Tracking Number:</strong>
-                {{ tracking_number }}
+        <div>
+
+            {% if session.get("user_id") %}
+
+                <span>
+                    Welcome, {{ session.get("user_name") }}
+                </span>
+
+                <a href="/logout" class="login-btn">
+                    Logout
+                </a>
+
+            {% else %}
+
+                <a href="/login" class="login-btn">
+                    Login
+                </a>
+
+                <a href="/register" class="register-btn">
+                    Register
+                </a>
+
+            {% endif %}
+
+        </div>
+
+    </header>
+
+
+    <!-- Report Form -->
+
+    <section class="form-page">
+
+        <div class="form-box">
+
+            <h2>Report Waste</h2>
+
+            <p class="report-help">
+                Please provide accurate information about the waste problem.
+                Fields marked with <span class="required-text">*</span> are required.
             </p>
-            <p>Save this number to check your report status later.</p>
-        {% endif %}
 
-        <form action="/report" method="POST"
-              enctype="multipart/form-data">
+            <!-- Error Message -->
+            {% if message %}
+                <p style="text-align: center; color: red;">
+                    {{ message }}
+                </p>
+            {% endif %}
 
-            <label for="waste_type">
-                Waste Type <span class="required-text">*</span>
-            </label>
 
-            <select id="waste_type" name="waste_type" required>
-                <option value="">Select Waste Type</option>
-                <option value="Garbage">Garbage</option>
-                <option value="Plastic Waste">Plastic Waste</option>
-                <option value="Food Waste">Food Waste</option>
-                <option value="Construction Waste">Construction Waste</option>
-                <option value="Electronic Waste">Electronic Waste</option>
-                <option value="Other">Other</option>
-            </select>
-
-            <label for="location">
-                Location <span class="required-text">*</span>
-            </label>
-
-            <input
-                type="text"
-                id="location"
-                name="location"
-                placeholder="Example: Taki Road, Nallasopara"
-                required
+            <form
+                action="/report"
+                method="POST"
+                enctype="multipart/form-data"
             >
 
-            <p class="field-help">
-                Enter the place where the waste is located.
-            </p>
+                <!-- Waste Type -->
 
-            <button type="button" id="gpsButton" class="gps-button">
-                📍 Use My Current Location
-            </button>
+                <label for="waste_type">
+                    Waste Type <span class="required-text">*</span>
+                </label>
 
-            <p id="gpsStatus" class="gps-status">
-                GPS location is optional. You can enter the address manually.
-            </p>
+                <select
+                    id="waste_type"
+                    name="waste_type"
+                    required
+                >
 
-            <input type="hidden" id="latitude" name="latitude">
-            <input type="hidden" id="longitude" name="longitude">
-
-            <label for="description">
-                Description <span class="required-text">*</span>
-            </label>
-
-            <textarea
-                id="description"
-                name="description"
-                rows="5"
-                maxlength="500"
-                placeholder="Example: Large amount of garbage is lying near the road."
-                required
-            ></textarea>
-
-            <p class="field-help">
-                Explain the waste problem. Maximum 500 characters.
-            </p>
-
-            <label for="photo">
-                Upload Waste Photo <span class="required-text">*</span>
-            </label>
-
-            <input
-                type="file"
-                id="photo"
-                name="photo"
-                accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
-                required
-            >
-
-            <p class="field-help">
-                Upload a clear photo showing the waste problem.
-            </p>
-
-            <div class="photo-preview" id="photoPreview">
-                <img id="previewImage" src="" alt="Selected Waste Photo">
-
-                <p class="photo-name" id="photoName"></p>
-
-                <button
-                    type="button"
-                    id="removePhoto"
-                    class="remove-photo-button">
-                    Remove Photo
-                </button>
-            </div>
-
-            <button type="submit">Submit Report</button>
-        </form>
-
-    </div>
-</section>
-
-<footer>
-    <p>© 2026 Smart Waste Reporting System</p>
-    <p>Together for a Cleaner and Greener City</p>
-</footer>
-
-<script>
-    const photoInput = document.getElementById("photo");
-    const photoPreview = document.getElementById("photoPreview");
-    const previewImage = document.getElementById("previewImage");
-    const photoName = document.getElementById("photoName");
-    const removePhoto = document.getElementById("removePhoto");
-
-    let currentPhotoURL = null;
-
-    photoInput.addEventListener("change", function () {
-        const file = this.files[0];
-
-        if (currentPhotoURL) {
-            URL.revokeObjectURL(currentPhotoURL);
-            currentPhotoURL = null;
-        }
-
-        if (file) {
-            if (!file.type.startsWith("image/")) {
-                alert("Please select an image file.");
-                photoInput.value = "";
-                photoPreview.style.display = "none";
-                return;
-            }
-
-            currentPhotoURL = URL.createObjectURL(file);
-            previewImage.src = currentPhotoURL;
-            photoName.textContent = "Selected: " + file.name;
-            photoPreview.style.display = "block";
-        } else {
-            previewImage.src = "";
-            photoName.textContent = "";
-            photoPreview.style.display = "none";
-        }
-    });
-
-    removePhoto.addEventListener("click", function () {
-        photoInput.value = "";
-
-        if (currentPhotoURL) {
-            URL.revokeObjectURL(currentPhotoURL);
-            currentPhotoURL = null;
-        }
-
-        previewImage.src = "";
-        photoName.textContent = "";
-        photoPreview.style.display = "none";
-    });
-
-    // Get the phone's current GPS coordinates.
-    const gpsButton = document.getElementById("gpsButton");
-    const gpsStatus = document.getElementById("gpsStatus");
-    const latitudeInput = document.getElementById("latitude");
-    const longitudeInput = document.getElementById("longitude");
-    const locationInput = document.getElementById("location");
-
-    gpsButton.addEventListener("click", function () {
-        if (!navigator.geolocation) {
-            gpsStatus.textContent =
-                "GPS is not supported by this browser. Enter the address manually.";
-            gpsStatus.className = "gps-status error-message";
-            return;
-        }
-
-        gpsButton.disabled = true;
-        gpsButton.textContent = "Getting your location...";
-
-        gpsStatus.textContent =
-            "Please allow location access when your phone asks.";
-
-        navigator.geolocation.getCurrentPosition(
-            function (position) {
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
-
-                latitudeInput.value = latitude;
-                longitudeInput.value = longitude;
-
-                gpsStatus.textContent =
-                    "GPS location captured successfully: " +
-                    latitude.toFixed(6) + ", " +
-                    longitude.toFixed(6);
-
-                gpsStatus.className = "gps-status success-message";
-
-                if (!locationInput.value.trim()) {
-                    locationInput.value =
-                        latitude.toFixed(6) + ", " +
-                        longitude.toFixed(6);
-                }
-
-                gpsButton.disabled = false;
-                gpsButton.textContent = "📍 Update My Location";
-            },
-            function (error) {
-                let message = "Could not get your location.";
-
-                if (error.code === 1) {
-                    message =
-                        "Location permission denied. Allow location access in your browser settings.";
-                } else if (error.code === 2) {
-                    message =
-                        "GPS location is unavailable. Try enabling phone location.";
-                } else if (error.code === 3) {
-                    message =
-                        "Location request timed out. Please try again.";
-                }
-
-                gpsStatus.textContent = message;
-                gpsStatus.className = "gps-status error-message";
-
-                gpsButton.disabled = false;
-                gpsButton.textContent = "📍 Use My Current Location";
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
-            }
-        );
-    });
-</script>
-
-</body>
-</html>
+                    <option value="">Select Waste Type</option>
+                    <option
