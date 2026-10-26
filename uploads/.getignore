@@ -1,9 +1,0 @@
-# Database aur uploaded photos (passwords aur private data hota hai)
-waste_system.db
-uploads/
-
-# Python
-__pycache__/
-*.pyc
-venv/
-.env
