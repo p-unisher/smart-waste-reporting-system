@@ -15,6 +15,29 @@ app = Flask(__name__)
 app.secret_key = "smart_waste_secret_key"
 
 
+# Add the viewport meta tag to every HTML page that does not have it,
+# so pages fit the screen on phones
+@app.after_request
+def add_viewport_meta(response):
+
+    if response.mimetype == "text/html" and not response.direct_passthrough:
+
+        html = response.get_data(as_text=True)
+
+        if 'name="viewport"' not in html and "<head>" in html:
+
+            html = html.replace(
+                "<head>",
+                '<head>\n<meta name="viewport" '
+                'content="width=device-width, initial-scale=1.0">',
+                1
+            )
+
+            response.set_data(html)
+
+    return response
+
+
 # ==================================================
 # PASSWORD HELPERS
 # ==================================================
@@ -177,10 +200,8 @@ def login():
             session["user_name"] = user[1]
             session["user_email"] = user[2]
 
-            return render_template(
-                "index.html",
-                message="Login successful!"
-            )
+            # The header shows "Welcome, <name>" after a successful login
+            return redirect(url_for("home"))
 
         return render_template(
             "login.html",
@@ -243,9 +264,10 @@ def register():
         connection.commit()
         connection.close()
 
+        # "success" is shown in green, "message" is shown in red
         return render_template(
             "login.html",
-            message="Registration successful! Please login."
+            success="Registration successful! Please login."
         )
 
     return render_template("register.html")
@@ -377,7 +399,7 @@ def reset_password():
 
         return render_template(
             "login.html",
-            message="Password reset successfully! Please login."
+            success="Password reset successfully! Please login."
         )
 
     return render_template("reset_password.html")
