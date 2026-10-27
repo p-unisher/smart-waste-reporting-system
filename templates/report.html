@@ -51,47 +51,4 @@ textarea{resize:vertical}
 <h2>Report Waste</h2>
 
 <p class="report-help">
-  Please provide accurate information about the waste problem.
-  Fields marked with <span class="required-text">*</span> are required.
-</p>
-
-<!-- Error message -->
-{% if message %}
-<p style="text-align:center;color:red;">{{ message }}</p>
-{% endif %}
-
-<form action="/report" method="POST" enctype="multipart/form-data">
-
-  <!-- Waste type -->
-  <label for="waste_type">Waste Type <span class="required-text">*</span></label>
-  <select id="waste_type" name="waste_type" required>
-    <option value="">Select Waste Type</option>
-    <option value="Garbage">Garbage</option>
-    <option value="Plastic Waste">Plastic Waste</option>
-    <option value="Food Waste">Food Waste</option>
-    <option value="Construction Waste">Construction Waste</option>
-    <option value="Electronic Waste">Electronic Waste</option>
-    <option value="Other">Other</option>
-  </select>
-
-  <!-- Location -->
-  <label for="location">Location <span class="required-text">*</span></label>
-  <input type="text" id="location" name="location" placeholder="Example: Taki Road, Nallasopara" required>
-
-  <!-- Hidden GPS fields, sent to the server with the form -->
-  <input type="hidden" name="latitude" id="latitude">
-  <input type="hidden" name="longitude" id="longitude">
-
-  <button type="button" id="locBtn" class="location-button">📍 Use my current location</button>
-  <p class="field-help" id="locStatus">
-    Click the button and the exact place name and address will be filled in automatically. You can edit it if needed.
-  </p>
-
-  <!-- Description -->
-  <label for="description">Description <span class="required-text">*</span></label>
-  <textarea id="description" name="description" rows="5" maxlength="500"
-    placeholder="Example: Large amount of garbage is lying near the road." required></textarea>
-  <p class="field-help">Briefly explain what type of waste is present and the problem. Maximum 500 characters.</p>
-
-  <!-- Waste photo -->
-  <label for="photo">Upload
+  Please provide accurate information
