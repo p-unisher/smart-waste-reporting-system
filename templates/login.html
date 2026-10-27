@@ -8,6 +8,30 @@
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Success message: green */
+        .msg-success {
+            text-align: center;
+            color: #1b5e20;
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        /* Error message: red */
+        .msg-error {
+            text-align: center;
+            color: #b71c1c;
+            background: #ffebee;
+            border: 1px solid #ef9a9a;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 
 <body>
@@ -42,9 +66,16 @@
                 Welcome to Smart Waste Reporting System
             </p>
 
-            <!-- Login message -->
+            <!-- Success message (green) -->
+            {% if success %}
+                <p class="msg-success">
+                    {{ success }}
+                </p>
+            {% endif %}
+
+            <!-- Error message (red) -->
             {% if message %}
-                <p style="text-align: center; color: red;">
+                <p class="msg-error">
                     {{ message }}
                 </p>
             {% endif %}
@@ -77,7 +108,7 @@
             </form>
 
 
-            <!-- Single forgot password for admin and user -->
+            <!-- Forgot password (works for both admin and user) -->
             <p style="text-align: center; margin-top: 15px;">
                 <a href="{{ url_for('forgot_password') }}">
                     Forgot Password?
