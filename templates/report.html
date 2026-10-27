@@ -1,11 +1,11 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Report Waste - Smart Waste Reporting System</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
 <style>
 .report-help{color:#666;font-size:14px;margin-bottom:20px}
 .field-help{color:#777;font-size:13px;margin-top:5px;margin-bottom:15px}
@@ -21,10 +21,12 @@ textarea{resize:vertical}
 .location-error{color:#d32f2f}
 </style>
 </head>
+
 <body>
 
 <header>
   <div class="logo">📚 Smart Waste Reporting System</div>
+
   <nav>
     <a href="/">Home</a>
     <a href="/about">About</a>
@@ -33,6 +35,7 @@ textarea{resize:vertical}
     <a href="/faq">FAQs</a>
     <a href="/contact">Contact</a>
   </nav>
+
   <div>
     {% if session.get("user_id") %}
       <span>Welcome, {{ session.get("user_name") }}</span>
@@ -60,7 +63,10 @@ textarea{resize:vertical}
 
 <form action="/report" method="POST" enctype="multipart/form-data">
 
-  <label for="waste_type">Waste Type <span class="required-text">*</span></label>
+  <label for="waste_type">
+    Waste Type <span class="required-text">*</span>
+  </label>
+
   <select id="waste_type" name="waste_type" required>
     <option value="">Select Waste Type</option>
     <option value="Garbage">Garbage</option>
@@ -71,9 +77,17 @@ textarea{resize:vertical}
     <option value="Other">Other</option>
   </select>
 
-  <label for="location">Location / Full Address <span class="required-text">*</span></label>
-  <input type="text" id="location" name="location"
-    placeholder="Building, road, area, city and pincode" required>
+  <label for="location">
+    Location / Full Address <span class="required-text">*</span>
+  </label>
+
+  <input
+    type="text"
+    id="location"
+    name="location"
+    placeholder="Click below to detect your current address"
+    required
+  >
 
   <input type="hidden" name="latitude" id="latitude">
   <input type="hidden" name="longitude" id="longitude">
@@ -83,24 +97,48 @@ textarea{resize:vertical}
   </button>
 
   <p class="field-help" id="locStatus" aria-live="polite">
-    Tap the button to detect your location and fill the available address.
-    You can edit the address manually.
+    Click the button to automatically fill your current address.
   </p>
 
-  <label for="description">Description <span class="required-text">*</span></label>
-  <textarea id="description" name="description" rows="5" maxlength="500"
-    placeholder="Example: Large amount of garbage is lying near the road." required></textarea>
-  <p class="field-help">Briefly explain what type of waste is present and the problem. Maximum 500 characters.</p>
+  <label for="description">
+    Description <span class="required-text">*</span>
+  </label>
 
-  <label for="photo">Upload Waste Photo <span class="required-text">*</span></label>
-  <input type="file" id="photo" name="photo"
-    accept="image/jpeg,image/png,image/jpg,image/webp" required>
-  <p class="field-help">Upload a clear photo showing the waste problem.</p>
+  <textarea
+    id="description"
+    name="description"
+    rows="5"
+    maxlength="500"
+    placeholder="Example: Large amount of garbage is lying near the road."
+    required
+  ></textarea>
+
+  <p class="field-help">
+    Briefly explain the waste problem. Maximum 500 characters.
+  </p>
+
+  <label for="photo">
+    Upload Waste Photo <span class="required-text">*</span>
+  </label>
+
+  <input
+    type="file"
+    id="photo"
+    name="photo"
+    accept="image/jpeg,image/png,image/jpg,image/webp"
+    required
+  >
+
+  <p class="field-help">
+    Upload a clear photo showing the waste problem.
+  </p>
 
   <div class="photo-preview" id="photoPreview">
     <img id="previewImage" src="" alt="Selected Waste Photo">
     <p class="photo-name" id="photoName"></p>
-    <button type="button" id="removePhoto" class="remove-photo-button">Remove Photo</button>
+    <button type="button" id="removePhoto" class="remove-photo-button">
+      Remove Photo
+    </button>
   </div>
 
   <button type="submit">Submit Report</button>
@@ -115,7 +153,8 @@ textarea{resize:vertical}
 </footer>
 
 <script>
-/* PHOTO PREVIEW AND REMOVE */
+/* ---------------- PHOTO PREVIEW ---------------- */
+
 const photoInput = document.getElementById("photo");
 const photoPreview = document.getElementById("photoPreview");
 const previewImage = document.getElementById("previewImage");
@@ -125,243 +164,273 @@ const removePhoto = document.getElementById("removePhoto");
 let previewUrl = null;
 
 photoInput.addEventListener("change", function () {
-  const file = this.files[0];
+    const file = this.files[0];
 
-  if (!file) {
-    photoPreview.style.display = "none";
-    return;
-  }
+    if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+    }
 
-  if (previewUrl) {
-    URL.revokeObjectURL(previewUrl);
-  }
+    if (!file) {
+        photoPreview.style.display = "none";
+        previewImage.src = "";
+        photoName.textContent = "";
+        return;
+    }
 
-  previewUrl = URL.createObjectURL(file);
-  previewImage.src = previewUrl;
-  photoName.textContent = "Selected: " + file.name;
-  photoPreview.style.display = "block";
+    previewUrl = URL.createObjectURL(file);
+    previewImage.src = previewUrl;
+    photoName.textContent = "Selected: " + file.name;
+    photoPreview.style.display = "block";
 });
 
 removePhoto.addEventListener("click", function () {
-  photoInput.value = "";
-  previewImage.src = "";
+    photoInput.value = "";
+    previewImage.src = "";
+    photoName.textContent = "";
+    photoPreview.style.display = "none";
 
-  if (previewUrl) {
-    URL.revokeObjectURL(previewUrl);
-    previewUrl = null;
-  }
-
-  photoName.textContent = "";
-  photoPreview.style.display = "none";
+    if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+    }
 });
 
-/* LOCATION AND ADDRESS */
+
+/* ---------------- CURRENT LOCATION ---------------- */
+
 const locBtn = document.getElementById("locBtn");
 const locStatus = document.getElementById("locStatus");
 const locationInput = document.getElementById("location");
 const latInput = document.getElementById("latitude");
 const lonInput = document.getElementById("longitude");
 
-function setStatus(message, type) {
-  locStatus.textContent = message;
-  locStatus.className = "field-help" + (type ? " " + type : "");
+function setStatus(message, type = "") {
+    locStatus.textContent = message;
+    locStatus.className = "field-help" + (type ? " " + type : "");
 }
 
 async function fetchJson(url) {
-  try {
-    const response = await fetch(url);
+    try {
+        const response = await fetch(url);
 
-    if (!response.ok) {
-      return null;
+        if (!response.ok) {
+            return null;
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Address lookup error:", error);
+        return null;
     }
-
-    return await response.json();
-  } catch (error) {
-    console.log("Address lookup failed:", error);
-    return null;
-  }
 }
 
-async function fillAddress(lat, lon) {
-  setStatus("Coordinates found. Finding your road and area...", "");
-
-  // Try OpenStreetMap first.
-  const osm = await fetchJson(
-    "https://nominatim.openstreetmap.org/reverse" +
-    "?format=jsonv2&addressdetails=1&zoom=18" +
-    "&accept-language=en&lat=" + encodeURIComponent(lat) +
-    "&lon=" + encodeURIComponent(lon)
-  );
-
-  const a = osm && osm.address ? osm.address : {};
-
-  // Try a second service if the first did not return useful address details.
-  let backup = null;
-
-  if (!osm || (!osm.address && !osm.display_name)) {
-    backup = await fetchJson(
-      "https://api.bigdatacloud.net/data/reverse-geocode-client" +
-      "?localityLanguage=en&latitude=" + encodeURIComponent(lat) +
-      "&longitude=" + encodeURIComponent(lon)
-    );
-  }
-
-  const d = backup || {};
-  const parts = [];
-
-  function add(value) {
-    if (value === null || value === undefined) return;
+function addPart(parts, value) {
+    if (!value) return;
 
     const text = String(value).trim();
+
     if (!text) return;
 
-    const lower = text.toLowerCase();
-
-    // Avoid exact duplicate address parts.
-    if (parts.some(part => part.toLowerCase() === lower)) return;
-
-    parts.push(text);
-  }
-
-  // Building and house information, if available.
-  add(a.house_number);
-  add(a.building || a.house_name || a.amenity || a.shop);
-
-  // Road or street.
-  add(
-    a.road || a.pedestrian || a.residential ||
-    a.footway || a.path || a.street
-  );
-
-  // Local area or neighbourhood.
-  add(
-    a.neighbourhood || a.city_block || a.quarter ||
-    a.suburb || a.locality || a.hamlet
-  );
-
-  // Town or city.
-  add(
-    a.town || a.city || a.village ||
-    a.municipality || a.city_district
-  );
-
-  // Backup locality details, if needed.
-  if (parts.length === 0) {
-    add(d.locality);
-    add(d.localityInfo && d.localityInfo.administrative &&
-        d.localityInfo.administrative[0] &&
-        d.localityInfo.administrative[0].name);
-    add(d.city);
-  }
-
-  add(a.county || a.state_district);
-  add(a.state || d.principalSubdivision);
-  add(a.postcode || d.postcode);
-  add(a.country || d.countryName);
-
-  let address = parts.join(", ");
-
-  // Use the complete address if structured fields were unavailable.
-  if (!address && osm && osm.display_name) {
-    address = osm.display_name;
-  }
-
-  if (!address && d.locality) {
-    address = [
-      d.locality,
-      d.city,
-      d.principalSubdivision,
-      d.postcode,
-      d.countryName
-    ].filter(Boolean).join(", ");
-  }
-
-  if (address) {
-    locationInput.value = address;
-    setStatus(
-      "Address detected. Please check it and add building details if needed. Accuracy: about " +
-      Math.round(currentAccuracy) + " metres.",
-      "location-ok"
+    const alreadyExists = parts.some(
+        part => part.toLowerCase() === text.toLowerCase()
     );
-  } else {
-    setStatus(
-      "Coordinates detected, but the address service could not find a street or area. Please type the address manually.",
-      "location-error"
-    );
-  }
+
+    if (!alreadyExists) {
+        parts.push(text);
+    }
 }
 
-let currentAccuracy = 0;
+async function fillAddress(lat, lon, accuracy) {
+    setStatus("📍 Finding your road, area and city...");
+
+    // First try OpenStreetMap reverse geocoding.
+    const osmUrl =
+        "https://nominatim.openstreetmap.org/reverse" +
+        "?format=jsonv2" +
+        "&addressdetails=1" +
+        "&zoom=18" +
+        "&accept-language=en" +
+        "&lat=" + encodeURIComponent(lat) +
+        "&lon=" + encodeURIComponent(lon);
+
+    const osm = await fetchJson(osmUrl);
+    const a = osm && osm.address ? osm.address : {};
+
+    // Try the backup service if road or locality information is missing.
+    let backup = null;
+
+    const hasRoad = Boolean(
+        a.road || a.pedestrian || a.footway ||
+        a.residential || a.path
+    );
+
+    const hasLocality = Boolean(
+        a.neighbourhood || a.suburb || a.quarter ||
+        a.city || a.town || a.village || a.municipality
+    );
+
+    if (!hasRoad || !hasLocality || !osm) {
+        const backupUrl =
+            "https://api.bigdatacloud.net/data/reverse-geocode-client" +
+            "?localityLanguage=en" +
+            "&latitude=" + encodeURIComponent(lat) +
+            "&longitude=" + encodeURIComponent(lon);
+
+        backup = await fetchJson(backupUrl);
+    }
+
+    const d = backup || {};
+    const parts = [];
+
+    // Road or street.
+    addPart(parts, a.road);
+    addPart(parts, a.pedestrian);
+    addPart(parts, a.residential);
+    addPart(parts, a.footway);
+    addPart(parts, a.path);
+    addPart(parts, a.street);
+
+    // Local area / neighbourhood.
+    addPart(parts, a.neighbourhood);
+    addPart(parts, a.city_block);
+    addPart(parts, a.quarter);
+    addPart(parts, a.suburb);
+    addPart(parts, a.locality);
+    addPart(parts, a.hamlet);
+
+    // Town / city / village.
+    addPart(parts, a.village);
+    addPart(parts, a.town);
+    addPart(parts, a.city);
+    addPart(parts, a.municipality);
+    addPart(parts, a.city_district);
+
+    // Backup locality details.
+    addPart(parts, d.locality);
+    addPart(parts, d.city);
+
+    if (d.localityInfo && d.localityInfo.administrative) {
+        d.localityInfo.administrative.forEach(item => {
+            if (item && item.name) {
+                addPart(parts, item.name);
+            }
+        });
+    }
+
+    // District, state, PIN code and country.
+    addPart(parts, a.county);
+    addPart(parts, a.state_district);
+    addPart(parts, a.state);
+    addPart(parts, d.principalSubdivision);
+    addPart(parts, a.postcode);
+    addPart(parts, d.postcode);
+    addPart(parts, a.country);
+    addPart(parts, d.countryName);
+
+    // Do not add house numbers.
+    const address = parts.join(", ");
+
+    if (address) {
+        locationInput.value = address;
+
+        const accuracyText = accuracy
+            ? " GPS accuracy is approximately " +
+              Math.round(accuracy) + " metres."
+            : "";
+
+        setStatus(
+            "✅ Current address filled! Please check it before submitting." +
+            accuracyText,
+            "location-ok"
+        );
+    } else {
+        setStatus(
+            "Address could not be found for this location. Please enter it manually.",
+            "location-error"
+        );
+    }
+}
 
 function getLocation() {
-  if (!navigator.geolocation) {
-    setStatus(
-      "Your browser does not support location. Please enter the address manually.",
-      "location-error"
-    );
-    return;
-  }
-
-  locBtn.disabled = true;
-  setStatus("Requesting your current location...", "");
-
-  navigator.geolocation.getCurrentPosition(
-    async function (position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      currentAccuracy = position.coords.accuracy || 0;
-
-      // Store coordinates in the hidden form fields.
-      latInput.value = lat;
-      lonInput.value = lon;
-
-      try {
-        await fillAddress(lat, lon);
-      } catch (error) {
-        console.error(error);
+    if (!navigator.geolocation) {
         setStatus(
-          "Coordinates found, but address lookup failed. Please enter the address manually.",
-          "location-error"
+            "Your browser does not support location. Enter the address manually.",
+            "location-error"
         );
-      } finally {
-        locBtn.disabled = false;
-      }
-    },
-    function (error) {
-      locBtn.disabled = false;
-
-      if (error.code === 1) {
-        setStatus(
-          "Location permission denied. Allow location access in your browser and try again.",
-          "location-error"
-        );
-      } else if (error.code === 2) {
-        setStatus(
-          "Location unavailable. Turn on device location/GPS and try again.",
-          "location-error"
-        );
-      } else if (error.code === 3) {
-        setStatus(
-          "Location request timed out. Try again or enter the address manually.",
-          "location-error"
-        );
-      } else {
-        setStatus(
-          "Could not detect location. Please enter the address manually.",
-          "location-error"
-        );
-      }
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0
+        return;
     }
-  );
+
+    locBtn.disabled = true;
+    setStatus("📍 Detecting your current GPS location...");
+
+    navigator.geolocation.getCurrentPosition(
+        async function (position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy || 0;
+
+            // Save coordinates in the form's hidden fields.
+            latInput.value = lat;
+            lonInput.value = lon;
+
+            try {
+                await fillAddress(lat, lon, accuracy);
+            } catch (error) {
+                console.error("Location error:", error);
+
+                setStatus(
+                    "Location detected, but address lookup failed. Please enter the address manually.",
+                    "location-error"
+                );
+            } finally {
+                locBtn.disabled = false;
+            }
+        },
+
+        function (error) {
+            locBtn.disabled = false;
+
+            if (error.code === 1) {
+                setStatus(
+                    "Location permission denied. Allow location access in your browser and try again.",
+                    "location-error"
+                );
+            } else if (error.code === 2) {
+                setStatus(
+                    "Location unavailable. Turn on your phone's GPS/location and try again.",
+                    "location-error"
+                );
+            } else if (error.code === 3) {
+                setStatus(
+                    "Location request timed out. Try again in an open area.",
+                    "location-error"
+                );
+            } else {
+                setStatus(
+                    "Could not detect location. Please enter the address manually.",
+                    "location-error"
+                );
+            }
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 25000,
+            maximumAge: 0
+        }
+    );
 }
 
-// Location is requested only after the user clicks the button.
+// Detect location only when the button is clicked.
 locBtn.addEventListener("click", getLocation);
+
+// If the user manually edits the address, don't keep stale coordinates.
+locationInput.addEventListener("input", function () {
+    latInput.value = "";
+    lonInput.value = "";
+});
+
 </script>
 
 </body>
