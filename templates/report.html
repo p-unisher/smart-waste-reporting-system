@@ -78,7 +78,7 @@ textarea{resize:vertical}
 
   <button type="button" id="locBtn" class="location-button">📍 Use my current location</button>
   <p class="field-help" id="locStatus">
-    Click the button and the exact place name and address will be filled in automatically. You can edit it if needed.
+    Click the button and the road, area, city and pincode will be filled in automatically. You can edit it if needed.
   </p>
 
   <label for="description">Description <span class="required-text">*</span></label>
@@ -141,7 +141,29 @@ function setStatus(text, cls) {
   locStatus.className = "field-help" + (cls ? " " + cls : "");
 }
 
+// Build a clean address: road, area, city, state, pincode
+function buildAddress(a) {
+  const parts = [];
+  function add(value) {
+    if (value && !parts.includes(value)) parts.push(value);
+  }
+
+  add(a.house_number);
+  add(a.road || a.pedestrian || a.footway || a.path);
+  add(a.neighbourhood);
+  add(a.suburb);
+  add(a.village || a.town || a.city || a.city_district || a.county);
+  add(a.state_district);
+  add(a.state);
+  add(a.postcode);
+
+  return parts.join(", ");
+}
+
 async function fillAddress(lat, lon) {
+  let address = "";
+
+  // 1) OpenStreetMap: road, area, city
   try {
     const res = await fetch(
       "https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&accept-language=en" +
@@ -149,16 +171,40 @@ async function fillAddress(lat, lon) {
     );
     const data = await res.json();
 
-    if (data && data.display_name) {
-      locationInput.value = data.display_name;
-      setStatus("Location detected. You can edit the address if needed.", "location-ok");
-    } else {
-      locationInput.value = lat.toFixed(6) + ", " + lon.toFixed(6);
-      setStatus("Address not found, coordinates saved. Please type the address.", "location-error");
+    if (data && data.address) {
+      address = buildAddress(data.address);
+
+      if (!address && data.display_name) {
+        address = data.display_name;
+      }
     }
-  } catch (e) {
+  } catch (e) {}
+
+  // 2) Backup: if road or area is missing, get the locality name from another free service
+  try {
+    if (!address || address.split(",").length < 3) {
+      const res2 = await fetch(
+        "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en" +
+        "&latitude=" + lat + "&longitude=" + lon
+      );
+      const d = await res2.json();
+
+      const backup = [d.locality, d.city, d.principalSubdivision, d.postcode]
+        .filter(function (v, i, arr) { return v && arr.indexOf(v) === i; })
+        .join(", ");
+
+      if (backup) {
+        address = address ? address + ", " + backup : backup;
+      }
+    }
+  } catch (e) {}
+
+  if (address) {
+    locationInput.value = address;
+    setStatus("Location detected. You can edit the address if needed.", "location-ok");
+  } else {
     locationInput.value = lat.toFixed(6) + ", " + lon.toFixed(6);
-    setStatus("Could not get the address (check internet). Coordinates saved, please type the address.", "location-error");
+    setStatus("Address not found, coordinates saved. Please type the address.", "location-error");
   }
 }
 
