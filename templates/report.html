@@ -141,63 +141,77 @@ function setStatus(text, cls) {
   locStatus.className = "field-help" + (cls ? " " + cls : "");
 }
 
-// Build a clean address: road, area, city, state, pincode
-function buildAddress(a) {
-  const parts = [];
-  function add(value) {
-    if (value && !parts.includes(value)) parts.push(value);
+async function getJson(url) {
+  try {
+    const res = await fetch(url);
+    return await res.json();
+  } catch (e) {
+    return null;
   }
-
-  add(a.house_number);
-  add(a.road || a.pedestrian || a.footway || a.path);
-  add(a.neighbourhood);
-  add(a.suburb);
-  add(a.village || a.town || a.city || a.city_district || a.county);
-  add(a.state_district);
-  add(a.state);
-  add(a.postcode);
-
-  return parts.join(", ");
 }
 
 async function fillAddress(lat, lon) {
-  let address = "";
-
-  // 1) OpenStreetMap: road, area, city
-  try {
-    const res = await fetch(
+  // Ask both free services at the same time
+  const results = await Promise.all([
+    getJson(
       "https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&accept-language=en" +
       "&lat=" + lat + "&lon=" + lon
-    );
-    const data = await res.json();
+    ),
+    getJson(
+      "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en" +
+      "&latitude=" + lat + "&longitude=" + lon
+    )
+  ]);
 
-    if (data && data.address) {
-      address = buildAddress(data.address);
+  const osm = results[0];
+  const bdc = results[1];
+  const a = (osm && osm.address) ? osm.address : {};
+  const d = bdc || {};
 
-      if (!address && data.display_name) {
-        address = data.display_name;
-      }
+  const parts = [];
+  function add(value) {
+    if (!value) return;
+    const v = String(value).trim();
+    if (!v) return;
+    const lower = v.toLowerCase();
+    // skip duplicates and names already contained in another part
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i].toLowerCase();
+      if (p === lower || p.indexOf(lower) !== -1 || lower.indexOf(p) !== -1) return;
     }
-  } catch (e) {}
+    parts.push(v);
+  }
 
-  // 2) Backup: if road or area is missing, get the locality name from another free service
-  try {
-    if (!address || address.split(",").length < 3) {
-      const res2 = await fetch(
-        "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en" +
-        "&latitude=" + lat + "&longitude=" + lon
-      );
-      const d = await res2.json();
+  // House / building / shop
+  add(a.house_number);
+  add(a.building || a.amenity || a.shop);
 
-      const backup = [d.locality, d.city, d.principalSubdivision, d.postcode]
-        .filter(function (v, i, arr) { return v && arr.indexOf(v) === i; })
-        .join(", ");
+  // Road
+  add(a.road || a.pedestrian || a.footway || a.path || a.residential);
 
-      if (backup) {
-        address = address ? address + ", " + backup : backup;
-      }
-    }
-  } catch (e) {}
+  // Area / locality (many possible names)
+  add(a.neighbourhood);
+  add(a.quarter);
+  add(a.suburb);
+  add(a.hamlet);
+  add(a.city_block);
+  add(a.village);
+  add(d.locality);
+
+  // City / town
+  add(a.town || a.city || a.city_district || a.municipality);
+  add(d.city);
+  add(a.county || a.state_district);
+
+  // State and pincode
+  add(a.state || d.principalSubdivision);
+  add(a.postcode || d.postcode);
+
+  let address = parts.join(", ");
+
+  if (!address && osm && osm.display_name) {
+    address = osm.display_name;
+  }
 
   if (address) {
     locationInput.value = address;
