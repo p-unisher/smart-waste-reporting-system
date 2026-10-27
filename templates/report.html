@@ -22,7 +22,6 @@ textarea{resize:vertical}
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="logo">📚 Smart Waste Reporting System</div>
   <nav>
@@ -44,11 +43,160 @@ textarea{resize:vertical}
   </div>
 </header>
 
-<!-- Report Form -->
 <section class="form-page">
 <div class="form-box">
 
 <h2>Report Waste</h2>
 
 <p class="report-help">
-  Please provide accurate information
+  Please provide accurate information about the waste problem.
+  Fields marked with <span class="required-text">*</span> are required.
+</p>
+
+{% if message %}
+<p style="text-align:center;color:red;">{{ message }}</p>
+{% endif %}
+
+<form action="/report" method="POST" enctype="multipart/form-data">
+
+  <label for="waste_type">Waste Type <span class="required-text">*</span></label>
+  <select id="waste_type" name="waste_type" required>
+    <option value="">Select Waste Type</option>
+    <option value="Garbage">Garbage</option>
+    <option value="Plastic Waste">Plastic Waste</option>
+    <option value="Food Waste">Food Waste</option>
+    <option value="Construction Waste">Construction Waste</option>
+    <option value="Electronic Waste">Electronic Waste</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <label for="location">Location <span class="required-text">*</span></label>
+  <input type="text" id="location" name="location" placeholder="Example: Taki Road, Nallasopara" required>
+
+  <input type="hidden" name="latitude" id="latitude">
+  <input type="hidden" name="longitude" id="longitude">
+
+  <button type="button" id="locBtn" class="location-button">📍 Use my current location</button>
+  <p class="field-help" id="locStatus">
+    Click the button and the exact place name and address will be filled in automatically. You can edit it if needed.
+  </p>
+
+  <label for="description">Description <span class="required-text">*</span></label>
+  <textarea id="description" name="description" rows="5" maxlength="500"
+    placeholder="Example: Large amount of garbage is lying near the road." required></textarea>
+  <p class="field-help">Briefly explain what type of waste is present and the problem. Maximum 500 characters.</p>
+
+  <label for="photo">Upload Waste Photo <span class="required-text">*</span></label>
+  <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/webp" required>
+  <p class="field-help">Upload a clear photo showing the waste problem.</p>
+
+  <div class="photo-preview" id="photoPreview">
+    <img id="previewImage" src="" alt="Selected Waste Photo">
+    <p class="photo-name" id="photoName"></p>
+    <button type="button" id="removePhoto" class="remove-photo-button">Remove Photo</button>
+  </div>
+
+  <button type="submit">Submit Report</button>
+
+</form>
+</div>
+</section>
+
+<footer>
+  <p>© 2026 Smart Waste Reporting System</p>
+  <p>Together for a Cleaner and Greener City</p>
+</footer>
+
+<script>
+const photoInput = document.getElementById("photo");
+const photoPreview = document.getElementById("photoPreview");
+const previewImage = document.getElementById("previewImage");
+const photoName = document.getElementById("photoName");
+const removePhoto = document.getElementById("removePhoto");
+
+photoInput.addEventListener("change", function () {
+  const file = this.files[0];
+  if (file) {
+    previewImage.src = URL.createObjectURL(file);
+    photoName.textContent = "Selected: " + file.name;
+    photoPreview.style.display = "block";
+  }
+});
+
+removePhoto.addEventListener("click", function () {
+  photoInput.value = "";
+  previewImage.src = "";
+  photoName.textContent = "";
+  photoPreview.style.display = "none";
+});
+
+const locBtn = document.getElementById("locBtn");
+const locStatus = document.getElementById("locStatus");
+const locationInput = document.getElementById("location");
+const latInput = document.getElementById("latitude");
+const lonInput = document.getElementById("longitude");
+
+function setStatus(text, cls) {
+  locStatus.textContent = text;
+  locStatus.className = "field-help" + (cls ? " " + cls : "");
+}
+
+async function fillAddress(lat, lon) {
+  try {
+    const res = await fetch(
+      "https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&addressdetails=1&accept-language=en" +
+      "&lat=" + lat + "&lon=" + lon
+    );
+    const data = await res.json();
+
+    if (data && data.display_name) {
+      locationInput.value = data.display_name;
+      setStatus("Location detected. You can edit the address if needed.", "location-ok");
+    } else {
+      locationInput.value = lat.toFixed(6) + ", " + lon.toFixed(6);
+      setStatus("Address not found, coordinates saved. Please type the address.", "location-error");
+    }
+  } catch (e) {
+    locationInput.value = lat.toFixed(6) + ", " + lon.toFixed(6);
+    setStatus("Could not get the address (check internet). Coordinates saved, please type the address.", "location-error");
+  }
+}
+
+function getLocation() {
+  if (!navigator.geolocation) {
+    setStatus("Your browser does not support location. Please type the address.", "location-error");
+    return;
+  }
+
+  locBtn.disabled = true;
+  setStatus("Getting your location...", "");
+
+  navigator.geolocation.getCurrentPosition(
+    async function (pos) {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      latInput.value = lat;
+      lonInput.value = lon;
+
+      await fillAddress(lat, lon);
+      locBtn.disabled = false;
+    },
+    function (err) {
+      locBtn.disabled = false;
+      if (err.code === 1) {
+        setStatus("Location permission denied. Please allow location or type the address.", "location-error");
+      } else {
+        setStatus("Could not get location. Turn on GPS or type the address.", "location-error");
+      }
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+locBtn.addEventListener("click", getLocation);
+window.addEventListener("load", getLocation);
+</script>
+
+</body>
+</html>
