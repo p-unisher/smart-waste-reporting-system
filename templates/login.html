@@ -1,8 +1,9 @@
-```html
 <!DOCTYPE html>
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Smart Waste Reporting System</title>
 
     <link rel="stylesheet"
@@ -41,17 +42,14 @@
                 Welcome to Smart Waste Reporting System
             </p>
 
-            <!-- Login Message -->
+            <!-- Login message -->
             {% if message %}
                 <p style="text-align: center; color: red;">
                     {{ message }}
                 </p>
             {% endif %}
 
-
-            <!-- User Login -->
-            <h3 style="text-align: center;">User Login</h3>
-
+            <!-- Single login form for both admin and user -->
             <form action="{{ url_for('login') }}" method="POST">
 
                 <label>Email</label>
@@ -73,16 +71,22 @@
                 >
 
                 <button type="submit">
-                    Login as User
+                    Login
                 </button>
 
             </form>
 
 
-            <!-- Forgot Password -->
+            <!-- Forgot password -->
             <p style="text-align: center; margin-top: 15px;">
                 <a href="{{ url_for('forgot_password') }}">
                     Forgot Password?
+                </a>
+            </p>
+
+            <p style="text-align: center; margin-top: 5px; font-size: 13px;">
+                <a href="{{ url_for('admin_forgot_password') }}">
+                    Admin forgot password?
                 </a>
             </p>
 
@@ -94,35 +98,6 @@
                     Register
                 </a>
             </p>
-
-
-            <hr style="margin: 25px 0;">
-
-
-            <!-- Admin Login -->
-            <h3 style="text-align: center;">
-                Administrator Login
-            </h3>
-
-            <p style="text-align: center;">
-                Admin can manage reports and update their status.
-            </p>
-
-            <div style="text-align: center; margin-top: 15px;">
-
-                <a href="{{ url_for('admin_login') }}"
-                   style="display: inline-block;
-                          padding: 12px 25px;
-                          background-color: #247a45;
-                          color: white;
-                          text-decoration: none;
-                          border-radius: 5px;">
-
-                    Admin Login
-
-                </a>
-
-            </div>
 
         </div>
 
@@ -145,4 +120,3 @@
 </body>
 
 </html>
-```
