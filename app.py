@@ -252,7 +252,7 @@ def register():
 
 
 # ==================================================
-# FORGOT PASSWORD (USER)
+# SINGLE FORGOT PASSWORD (ADMIN AND USER)
 # ==================================================
 
 @app.route("/forgot-password", methods=["GET", "POST"])
@@ -265,25 +265,39 @@ def forgot_password():
         connection = sqlite3.connect("waste_system.db")
         cursor = connection.cursor()
 
+        # Check the admins table first
         cursor.execute("""
-            SELECT id FROM users WHERE LOWER(email) = ?
+            SELECT id FROM admins WHERE LOWER(email) = ?
         """, (email,))
 
-        user = cursor.fetchone()
+        admin = cursor.fetchone()
+
+        user = None
+
+        # If it is not an admin, check the users table
+        if not admin:
+            cursor.execute("""
+                SELECT id FROM users WHERE LOWER(email) = ?
+            """, (email,))
+
+            user = cursor.fetchone()
 
         connection.close()
 
-        if not user:
+        if not admin and not user:
             return render_template(
                 "forgot_password.html",
                 message="Email not found."
             )
 
-        otp = random.randint(100000, 999999)
+        otp = str(random.randint(100000, 999999))
 
         session["reset_email"] = email
-        session["reset_otp"] = str(otp)
+        session["reset_type"] = "admin" if admin else "user"
+        session["reset_otp"] = otp
+        session.pop("otp_verified", None)
 
+        # The OTP is printed in the server log
         print("--------------------------------")
         print("PASSWORD RESET OTP:", otp)
         print("--------------------------------")
@@ -296,9 +310,13 @@ def forgot_password():
 @app.route("/verify-otp", methods=["GET", "POST"])
 def verify_otp():
 
+    # The reset must start from the forgot password page
+    if not session.get("reset_email"):
+        return redirect(url_for("forgot_password"))
+
     if request.method == "POST":
 
-        entered_otp = request.form["otp"]
+        entered_otp = request.form["otp"].strip()
         saved_otp = session.get("reset_otp")
 
         if saved_otp and entered_otp == saved_otp:
@@ -313,19 +331,13 @@ def verify_otp():
 @app.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
 
-    if not session.get("otp_verified"):
-        return "Please verify OTP first."
+    if not session.get("otp_verified") or not session.get("reset_email"):
+        return redirect(url_for("forgot_password"))
 
     if request.method == "POST":
 
         new_password = request.form["new_password"]
         confirm_password = request.form["confirm_password"]
-
-        if new_password != confirm_password:
-            return render_template(
-                "reset_password.html",
-                message="Passwords do not match."
-            )
 
         if new_password == "":
             return render_template(
@@ -333,19 +345,33 @@ def reset_password():
                 message="Password cannot be empty."
             )
 
+        if new_password != confirm_password:
+            return render_template(
+                "reset_password.html",
+                message="Passwords do not match."
+            )
+
         email = session.get("reset_email")
+
+        # Update the table of the account type that was found earlier
+        if session.get("reset_type") == "admin":
+            table = "admins"
+        else:
+            table = "users"
 
         connection = sqlite3.connect("waste_system.db")
         cursor = connection.cursor()
 
-        cursor.execute("""
-            UPDATE users SET password = ? WHERE LOWER(email) = ?
-        """, (generate_password_hash(new_password), email))
+        cursor.execute(
+            f"UPDATE {table} SET password = ? WHERE LOWER(email) = ?",
+            (generate_password_hash(new_password), email)
+        )
 
         connection.commit()
         connection.close()
 
         session.pop("reset_email", None)
+        session.pop("reset_type", None)
         session.pop("reset_otp", None)
         session.pop("otp_verified", None)
 
@@ -355,6 +381,12 @@ def reset_password():
         )
 
     return render_template("reset_password.html")
+
+
+# The old admin forgot password URL now opens the single page
+@app.route("/admin-forgot-password")
+def admin_forgot_password():
+    return redirect(url_for("forgot_password"))
 
 
 # ==================================================
@@ -652,115 +684,6 @@ def faq():
 @app.route("/contact")
 def contact():
     return render_template("contact.html")
-
-
-# ==================================================
-# ADMIN FORGOT PASSWORD
-# ==================================================
-
-@app.route("/admin-forgot-password", methods=["GET", "POST"])
-def admin_forgot_password():
-
-    if request.method == "POST":
-
-        email = request.form["email"].strip().lower()
-
-        connection = sqlite3.connect("waste_system.db")
-        cursor = connection.cursor()
-
-        cursor.execute("""
-            SELECT id FROM admins WHERE LOWER(email) = ?
-        """, (email,))
-
-        admin = cursor.fetchone()
-
-        connection.close()
-
-        if not admin:
-            return render_template(
-                "admin_forgot_password.html",
-                message="Admin email not found."
-            )
-
-        otp = random.randint(100000, 999999)
-
-        session["admin_reset_email"] = email
-        session["admin_reset_otp"] = str(otp)
-
-        print("--------------------------------")
-        print("ADMIN PASSWORD RESET OTP:", otp)
-        print("--------------------------------")
-
-        return redirect(url_for("admin_verify_otp"))
-
-    return render_template("admin_forgot_password.html")
-
-
-@app.route("/admin-verify-otp", methods=["GET", "POST"])
-def admin_verify_otp():
-
-    if not session.get("admin_reset_email"):
-        return redirect(url_for("admin_forgot_password"))
-
-    if request.method == "POST":
-
-        entered_otp = request.form["otp"]
-        saved_otp = session.get("admin_reset_otp")
-
-        if saved_otp and entered_otp == saved_otp:
-            session["admin_otp_verified"] = True
-            return redirect(url_for("admin_reset_password"))
-
-        return render_template("admin_verify_otp.html", message="Invalid OTP.")
-
-    return render_template("admin_verify_otp.html")
-
-
-@app.route("/admin-reset-password", methods=["GET", "POST"])
-def admin_reset_password():
-
-    if not session.get("admin_otp_verified"):
-        return "Please verify OTP first."
-
-    if request.method == "POST":
-
-        new_password = request.form["new_password"]
-        confirm_password = request.form["confirm_password"]
-
-        if new_password == "":
-            return render_template(
-                "admin_reset_password.html",
-                message="Password cannot be empty."
-            )
-
-        if new_password != confirm_password:
-            return render_template(
-                "admin_reset_password.html",
-                message="Passwords do not match."
-            )
-
-        email = session.get("admin_reset_email")
-
-        connection = sqlite3.connect("waste_system.db")
-        cursor = connection.cursor()
-
-        cursor.execute("""
-            UPDATE admins SET password = ? WHERE LOWER(email) = ?
-        """, (generate_password_hash(new_password), email))
-
-        connection.commit()
-        connection.close()
-
-        session.pop("admin_reset_email", None)
-        session.pop("admin_reset_otp", None)
-        session.pop("admin_otp_verified", None)
-
-        return render_template(
-            "login.html",
-            message="Admin password reset successfully! Please login."
-        )
-
-    return render_template("admin_reset_password.html")
 
 
 # ==================================================
