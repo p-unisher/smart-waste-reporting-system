@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +6,7 @@
 <title>Report Waste - Smart Waste Reporting System</title>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
 .report-help {
@@ -73,6 +73,14 @@ textarea {
 .location-button:disabled {
   background: #90a4ae;
   cursor: wait;
+}
+
+#map {
+  display: none;
+  height: 280px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 8px;
 }
 
 .location-ok {
@@ -163,6 +171,11 @@ textarea {
     Click the button to detect your location.
   </p>
 
+  <div id="map"></div>
+  <p class="field-help" id="mapHelp" style="display:none;">
+    Pin sahi jagah par nahi hai? Pin ko drag karo ya map par click karo, address update ho jayega.
+  </p>
+
   <label for="description">
     Description <span class="required-text">*</span>
   </label>
@@ -214,244 +227,3 @@ textarea {
 </form>
 </div>
 </section>
-
-<footer>
-  <p>© 2026 Smart Waste Reporting System</p>
-  <p>Together for a Cleaner and Greener City</p>
-</footer>
-
-<script>
-/* PHOTO PREVIEW */
-
-const photoInput = document.getElementById("photo");
-const photoPreview = document.getElementById("photoPreview");
-const previewImage = document.getElementById("previewImage");
-const photoName = document.getElementById("photoName");
-const removePhoto = document.getElementById("removePhoto");
-
-let previewUrl = null;
-
-photoInput.addEventListener("change", function () {
-  const file = this.files[0];
-
-  if (!file) {
-    photoPreview.style.display = "none";
-    return;
-  }
-
-  if (previewUrl) {
-    URL.revokeObjectURL(previewUrl);
-  }
-
-  previewUrl = URL.createObjectURL(file);
-  previewImage.src = previewUrl;
-  photoName.textContent = "Selected: " + file.name;
-  photoPreview.style.display = "block";
-});
-
-removePhoto.addEventListener("click", function () {
-  photoInput.value = "";
-  previewImage.src = "";
-
-  if (previewUrl) {
-    URL.revokeObjectURL(previewUrl);
-    previewUrl = null;
-  }
-
-  photoName.textContent = "";
-  photoPreview.style.display = "none";
-});
-
-
-/* CURRENT LOCATION */
-
-const locBtn = document.getElementById("locBtn");
-const locStatus = document.getElementById("locStatus");
-const locationInput = document.getElementById("location");
-const latInput = document.getElementById("latitude");
-const lonInput = document.getElementById("longitude");
-
-function setStatus(message, type = "") {
-  locStatus.textContent = message;
-  locStatus.className = "field-help" +
-    (type ? " " + type : "");
-}
-
-
-/* Only road, area and city are included. */
-
-function formatAddress(data) {
-  const a = data && data.address ? data.address : {};
-
-  const road =
-    a.road ||
-    a.pedestrian ||
-    a.residential ||
-    a.street ||
-    a.footway ||
-    a.path ||
-    "";
-
-  const area =
-    a.neighbourhood ||
-    a.suburb ||
-    a.quarter ||
-    a.city_district ||
-    a.locality ||
-    a.hamlet ||
-    "";
-
-  const city =
-    a.city ||
-    a.town ||
-    a.village ||
-    a.municipality ||
-    "";
-
-  // Remove blank fields and duplicate names.
-  const result = [];
-  const seen = new Set();
-
-  [road, area, city].forEach(function (value) {
-    const name = String(value || "").trim();
-    const key = name.toLowerCase();
-
-    if (name && !seen.has(key)) {
-      result.push(name);
-      seen.add(key);
-    }
-  });
-
-  return result.join(", ");
-}
-
-
-async function reverseGeocode(lat, lon) {
-  const url =
-    "https://nominatim.openstreetmap.org/reverse" +
-    "?format=jsonv2" +
-    "&addressdetails=1" +
-    "&zoom=18" +
-    "&accept-language=en" +
-    "&lat=" + encodeURIComponent(lat) +
-    "&lon=" + encodeURIComponent(lon);
-
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error("Address service unavailable");
-  }
-
-  return await response.json();
-}
-
-
-async function getAddress(lat, lon) {
-  setStatus("Finding road, area and city...");
-
-  try {
-    const data = await reverseGeocode(lat, lon);
-    const address = formatAddress(data);
-
-    if (address) {
-      locationInput.value = address;
-
-      setStatus(
-        "Location detected. Please verify the address.",
-        "location-ok"
-      );
-    } else {
-      locationInput.value = "";
-
-      setStatus(
-        "Road or area name is unavailable here. Please enter it manually.",
-        "location-error"
-      );
-    }
-  } catch (error) {
-    console.error("Address lookup error:", error);
-
-    locationInput.value = "";
-
-    setStatus(
-      "Could not fetch the address. Please enter it manually.",
-      "location-error"
-    );
-  }
-}
-
-
-function getCurrentLocation() {
-  if (!navigator.geolocation) {
-    setStatus(
-      "Your browser does not support GPS location.",
-      "location-error"
-    );
-    return;
-  }
-
-  locBtn.disabled = true;
-  setStatus("Detecting your current location...");
-
-  navigator.geolocation.getCurrentPosition(
-    async function (position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-
-      latInput.value = lat;
-      lonInput.value = lon;
-
-      try {
-        await getAddress(lat, lon);
-      } finally {
-        locBtn.disabled = false;
-      }
-    },
-
-    function (error) {
-      locBtn.disabled = false;
-
-      if (error.code === 1) {
-        setStatus(
-          "Location permission denied. Allow location access in your browser.",
-          "location-error"
-        );
-      } else if (error.code === 2) {
-        setStatus(
-          "Location unavailable. Turn on your device GPS.",
-          "location-error"
-        );
-      } else if (error.code === 3) {
-        setStatus(
-          "Location timed out. Please try again.",
-          "location-error"
-        );
-      } else {
-        setStatus(
-          "Could not detect location. Enter it manually.",
-          "location-error"
-        );
-      }
-    },
-
-    {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0
-    }
-  );
-}
-
-locBtn.addEventListener("click", getCurrentLocation);
-
-
-/* Clear coordinates if the user edits the address manually. */
-
-locationInput.addEventListener("input", function () {
-  latInput.value = "";
-  lonInput.value = "";
-});
-</script>
-
-</body>
-</html>
