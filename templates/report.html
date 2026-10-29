@@ -140,4 +140,364 @@ textarea {
 
   <select id="waste_type" name="waste_type" required>
     <option value="">Select Waste Type</option>
-    <option value="Garbage">Garbag
+    <option value="Garbage">Garbage</option>
+    <option value="Plastic Waste">Plastic Waste</option>
+    <option value="Food Waste">Food Waste</option>
+    <option value="Construction Waste">Construction Waste</option>
+    <option value="Electronic Waste">Electronic Waste</option>
+    <option value="Other">Other</option>
+  </select>
+
+  <label for="location">
+    Location / Address <span class="required-text">*</span>
+  </label>
+
+  <input
+    type="text"
+    id="location"
+    name="location"
+    placeholder="Road, area and city"
+    required
+  >
+
+  <input type="hidden" name="latitude" id="latitude">
+  <input type="hidden" name="longitude" id="longitude">
+
+  <button type="button" id="locBtn" class="location-button">
+    📍 Use my current location
+  </button>
+
+  <p class="field-help" id="locStatus" aria-live="polite">
+    Click the button to detect your location.
+  </p>
+
+  <div id="map"></div>
+  <p class="field-help" id="mapHelp" style="display:none;">
+    Pin sahi jagah par nahi hai? Pin ko drag karo ya map par click karo, address update ho jayega.
+  </p>
+
+  <label for="description">
+    Description <span class="required-text">*</span>
+  </label>
+
+  <textarea
+    id="description"
+    name="description"
+    rows="5"
+    maxlength="500"
+    placeholder="Example: Large amount of garbage is lying near the road."
+    required
+  ></textarea>
+
+  <p class="field-help">
+    Briefly explain the waste problem. Maximum 500 characters.
+  </p>
+
+  <label for="photo">
+    Upload Waste Photo <span class="required-text">*</span>
+  </label>
+
+  <input
+    type="file"
+    id="photo"
+    name="photo"
+    accept="image/jpeg,image/png,image/jpg,image/webp"
+    required
+  >
+
+  <p class="field-help">
+    Upload a clear photo showing the waste problem.
+  </p>
+
+  <div class="photo-preview" id="photoPreview">
+    <img id="previewImage" src="" alt="Selected Waste Photo">
+    <p class="photo-name" id="photoName"></p>
+
+    <button
+      type="button"
+      id="removePhoto"
+      class="remove-photo-button"
+    >
+      Remove Photo
+    </button>
+  </div>
+
+  <button type="submit">Submit Report</button>
+
+</form>
+</div>
+</section>
+
+<footer>
+  <p>© 2026 Smart Waste Reporting System</p>
+  <p>Together for a Cleaner and Greener City</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* PHOTO PREVIEW */
+
+const photoInput = document.getElementById("photo");
+const photoPreview = document.getElementById("photoPreview");
+const previewImage = document.getElementById("previewImage");
+const photoName = document.getElementById("photoName");
+const removePhoto = document.getElementById("removePhoto");
+
+let previewUrl = null;
+
+photoInput.addEventListener("change", function () {
+  const file = this.files[0];
+
+  if (!file) {
+    photoPreview.style.display = "none";
+    return;
+  }
+
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+  }
+
+  previewUrl = URL.createObjectURL(file);
+  previewImage.src = previewUrl;
+  photoName.textContent = "Selected: " + file.name;
+  photoPreview.style.display = "block";
+});
+
+removePhoto.addEventListener("click", function () {
+  photoInput.value = "";
+  previewImage.src = "";
+
+  if (previewUrl) {
+    URL.revokeObjectURL(previewUrl);
+    previewUrl = null;
+  }
+
+  photoName.textContent = "";
+  photoPreview.style.display = "none";
+});
+
+
+/* CURRENT LOCATION */
+
+const locBtn = document.getElementById("locBtn");
+const locStatus = document.getElementById("locStatus");
+const locationInput = document.getElementById("location");
+const latInput = document.getElementById("latitude");
+const lonInput = document.getElementById("longitude");
+const mapDiv = document.getElementById("map");
+const mapHelp = document.getElementById("mapHelp");
+
+let map = null;
+let marker = null;
+let accuracyCircle = null;
+
+function setStatus(message, type = "") {
+  locStatus.textContent = message;
+  locStatus.className = "field-help" + (type ? " " + type : "");
+}
+
+/* Build a full address: house/place, road, area, city, district, state, pincode */
+function formatAddress(data, extra) {
+  const a = data && data.address ? data.address : {};
+  extra = extra || {};
+
+  const parts = [
+    a.house_number && a.road ? a.house_number + " " + a.road : (a.road || a.pedestrian || a.residential || a.street || a.footway || a.path),
+    a.amenity || a.building || a.shop || a.tourism || a.leisure,
+    a.neighbourhood || a.quarter,
+    a.suburb || a.city_district || a.locality || a.hamlet || extra.locality,
+    a.city || a.town || a.village || a.municipality || extra.city,
+    a.state_district || a.county,
+    a.state || extra.state,
+    a.postcode || extra.postcode
+  ];
+
+  const seen = new Set();
+  const result = [];
+  parts.forEach(function (v) {
+    const name = String(v || "").trim();
+    const key = name.toLowerCase();
+    if (name && !seen.has(key)) { result.push(name); seen.add(key); }
+  });
+
+  // Nothing structured found: fall back to Nominatim's full text.
+  if (result.length < 2 && data && data.display_name) {
+    return data.display_name;
+  }
+  return result.join(", ");
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Address service unavailable");
+  return await response.json();
+}
+
+async function reverseGeocode(lat, lon) {
+  // Two free services, no API key. The second one fills gaps (pincode, locality).
+  const nominatim = fetchJson(
+    "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=en" +
+    "&lat=" + encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lon)
+  ).catch(function () { return null; });
+
+  const bdc = fetchJson(
+    "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en" +
+    "&latitude=" + encodeURIComponent(lat) + "&longitude=" + encodeURIComponent(lon)
+  ).catch(function () { return null; });
+
+  const results = await Promise.all([nominatim, bdc]);
+  const n = results[0];
+  const b = results[1] || {};
+
+  const extra = {
+    locality: b.locality,
+    city: b.city,
+    state: b.principalSubdivision,
+    postcode: b.postcode
+  };
+
+  if (!n && !b.locality && !b.city) throw new Error("No address data");
+  return formatAddress(n, extra);
+}
+
+function coordText(lat, lon) {
+  return "GPS: " + Number(lat).toFixed(6) + ", " + Number(lon).toFixed(6);
+}
+
+async function updateAddress(lat, lon) {
+  // Exact position is ALWAYS written first, so the report is exact even if no street name exists.
+  locationInput.value = coordText(lat, lon);
+  setStatus("Exact GPS mil gaya. Address dhoondh raha hu...", "location-ok");
+
+  const link = "https://www.google.com/maps?q=" + lat + "," + lon;
+
+  try {
+    const address = await reverseGeocode(lat, lon);
+    locationInput.value = (address ? address + " | " : "") + coordText(lat, lon);
+    setStatus("Exact location set ho gayi. Map link: " + link, "location-ok");
+  } catch (error) {
+    console.error("Address lookup error:", error);
+    setStatus("Street address nahi mila, par exact GPS coordinates save ho gaye. Chaho to address me landmark likh do.", "location-ok");
+  }
+}
+
+function setPoint(lat, lon, accuracy, fetchAddress) {
+  latInput.value = lat;
+  lonInput.value = lon;
+
+  if (typeof L === "undefined") {          // map library failed to load
+    if (fetchAddress) updateAddress(lat, lon);
+    return;
+  }
+
+  mapDiv.style.display = "block";
+  mapHelp.style.display = "block";
+
+  if (!map) {
+    map = L.map("map").setView([lat, lon], 18);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+
+    marker.on("dragend", function () {
+      const p = marker.getLatLng();
+      setPoint(p.lat, p.lng, null, true);
+    });
+
+    map.on("click", function (e) {
+      marker.setLatLng(e.latlng);
+      setPoint(e.latlng.lat, e.latlng.lng, null, true);
+    });
+  } else {
+    marker.setLatLng([lat, lon]);
+    map.setView([lat, lon], Math.max(map.getZoom(), 18));
+  }
+
+  if (accuracyCircle) { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+  if (accuracy) {
+    accuracyCircle = L.circle([lat, lon], { radius: accuracy, weight: 1 }).addTo(map);
+  }
+  setTimeout(function () { map.invalidateSize(); }, 50);
+
+  if (fetchAddress) updateAddress(lat, lon);
+}
+
+/* Watch GPS for a few seconds and keep the most accurate reading. */
+function getCurrentLocation() {
+  if (!navigator.geolocation) {
+    setStatus("Aapka browser GPS support nahi karta.", "location-error");
+    return;
+  }
+
+  if (!window.isSecureContext) {
+    setStatus("Browser GPS sirf https ya http://localhost / http://127.0.0.1 par chalta hai. Abhi aap " + location.origin + " par ho.", "location-error");
+    return;
+  }
+
+  locBtn.disabled = true;
+  setStatus("GPS se exact location le raha hu... (10 second tak). Permission aaye to Allow dabao.");
+
+  let best = null;
+  let finished = false;
+  let watchId = null;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    navigator.geolocation.clearWatch(watchId);
+    clearTimeout(timer);
+    locBtn.disabled = false;
+
+    if (!best) {
+      setStatus("Location nahi mili. Dobara try karo.", "location-error");
+      return;
+    }
+
+    setPoint(best.latitude, best.longitude, best.accuracy, true);
+
+    if (best.accuracy > 100) {
+      setStatus(
+        "GPS accuracy sirf ~" + Math.round(best.accuracy) + " m hai (laptop/Wi-Fi location). " +
+        "Mobile par GPS on karke try karo ya map par pin sahi jagah rakho.",
+        "location-error"
+      );
+    }
+  }
+
+  const timer = setTimeout(finish, 10000);
+
+  watchId = navigator.geolocation.watchPosition(
+    function (position) {
+      const c = position.coords;
+      if (!best || c.accuracy < best.accuracy) {
+        best = { latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy };
+        setStatus("Accuracy: ~" + Math.round(c.accuracy) + " m ...");
+      }
+      if (c.accuracy <= 20) finish();   // good enough
+    },
+    function (error) {
+      if (best) { finish(); return; }
+      finished = true;
+      clearTimeout(timer);
+      navigator.geolocation.clearWatch(watchId);
+      locBtn.disabled = false;
+
+      const msgs = {
+        1: "Location permission denied. Browser me location allow karo.",
+        2: "Location unavailable. Device ka GPS on karo.",
+        3: "Location timed out. Dobara try karo."
+      };
+      setStatus(msgs[error.code] || "Location detect nahi hui. Khud enter karo.", "location-error");
+    },
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+  );
+}
+
+locBtn.addEventListener("click", getCurrentLocation);
+</script>
+
+</body>
+</html>
