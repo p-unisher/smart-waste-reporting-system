@@ -1,12 +1,24 @@
 import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# Load KEY=VALUE lines from .env (keeps API keys out of the code)
+if os.path.exists(".env"):
+    for _line in open(".env", encoding="utf-8"):
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
+
 from flask import Flask, render_template, request, session, send_from_directory, redirect, url_for
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import database
 import sqlite3
 import random
+import json
+import urllib.request
+import urllib.parse
+from flask import jsonify
 from datetime import datetime
 
 
@@ -492,6 +504,43 @@ def logout():
 
     return redirect(url_for("home"))
 
+
+
+# ==================================================
+# REVERSE GEOCODE (Ola Maps) - key stays on the server
+# ==================================================
+
+@app.route("/reverse-geocode")
+def reverse_geocode():
+
+    try:
+        lat = float(request.args.get("lat", ""))
+        lon = float(request.args.get("lon", ""))
+    except ValueError:
+        return jsonify({"address": "", "error": "bad coordinates"}), 400
+
+    api_key = os.environ.get("OLA_API_KEY", "")
+
+    if not api_key:
+        return jsonify({"address": "", "error": "OLA_API_KEY not set"}), 200
+
+    url = "https://api.olamaps.io/places/v1/reverse-geocode?" + urllib.parse.urlencode({
+        "latlng": f"{lat},{lon}",
+        "api_key": api_key
+    })
+
+    try:
+        with urllib.request.urlopen(url, timeout=8) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        results = data.get("results") or []
+        address = results[0].get("formatted_address", "") if results else ""
+
+        return jsonify({"address": address})
+
+    except Exception as error:
+        print("Ola reverse geocode error:", error)
+        return jsonify({"address": "", "error": "lookup failed"}), 200
 
 # ==================================================
 # REPORT WASTE
