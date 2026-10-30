@@ -174,7 +174,7 @@ textarea {
 
   <div id="map"></div>
   <p class="field-help" id="mapHelp" style="display:none;">
-    Pin sahi jagah par nahi hai? Pin ko drag karo ya map par click karo, address update ho jayega.
+    Is the pin in the wrong place? Drag the pin or tap on the map, and the address will update.
   </p>
 
   <label for="description">
@@ -374,17 +374,15 @@ function coordText(lat, lon) {
 async function updateAddress(lat, lon) {
   // Exact position is ALWAYS written first, so the report is exact even if no street name exists.
   locationInput.value = coordText(lat, lon);
-  setStatus("Exact GPS mil gaya. Address dhoondh raha hu...", "location-ok");
-
-  const link = "https://www.google.com/maps?q=" + lat + "," + lon;
+  setStatus("Exact GPS location found. Looking up the address...", "location-ok");
 
   try {
     const address = await reverseGeocode(lat, lon);
     locationInput.value = (address ? address + " | " : "") + coordText(lat, lon);
-    setStatus("Exact location set ho gayi. Map link: " + link, "location-ok");
+    setStatus("Exact location set. Please check the address below and edit it if needed.", "location-ok");
   } catch (error) {
     console.error("Address lookup error:", error);
-    setStatus("Street address nahi mila, par exact GPS coordinates save ho gaye. Chaho to address me landmark likh do.", "location-ok");
+    setStatus("Street address not found, but your exact GPS coordinates are saved. You can add a landmark in the address field.", "location-ok");
   }
 }
 
@@ -435,17 +433,17 @@ function setPoint(lat, lon, accuracy, fetchAddress) {
 /* Watch GPS for a few seconds and keep the most accurate reading. */
 function getCurrentLocation() {
   if (!navigator.geolocation) {
-    setStatus("Aapka browser GPS support nahi karta.", "location-error");
+    setStatus("Your browser does not support GPS location.", "location-error");
     return;
   }
 
   if (!window.isSecureContext) {
-    setStatus("Browser GPS sirf https ya http://localhost / http://127.0.0.1 par chalta hai. Abhi aap " + location.origin + " par ho.", "location-error");
+    setStatus("GPS works only on https or localhost. You are currently on " + location.origin + ".", "location-error");
     return;
   }
 
   locBtn.disabled = true;
-  setStatus("GPS se exact location le raha hu... (10 second tak). Permission aaye to Allow dabao.");
+  setStatus("Getting your exact location (up to 10 seconds). Tap Allow if asked for permission.");
 
   let best = null;
   let finished = false;
@@ -459,7 +457,7 @@ function getCurrentLocation() {
     locBtn.disabled = false;
 
     if (!best) {
-      setStatus("Location nahi mili. Dobara try karo.", "location-error");
+      setStatus("Location not found. Please try again.", "location-error");
       return;
     }
 
@@ -467,8 +465,8 @@ function getCurrentLocation() {
 
     if (best.accuracy > 100) {
       setStatus(
-        "GPS accuracy sirf ~" + Math.round(best.accuracy) + " m hai (laptop/Wi-Fi location). " +
-        "Mobile par GPS on karke try karo ya map par pin sahi jagah rakho.",
+        "GPS accuracy is only ~" + Math.round(best.accuracy) + " m (laptop or Wi-Fi location). " +
+        "Turn on GPS on your mobile and try again, or move the pin to the correct place on the map.",
         "location-error"
       );
     }
@@ -493,11 +491,11 @@ function getCurrentLocation() {
       locBtn.disabled = false;
 
       const msgs = {
-        1: "Location permission denied. Browser me location allow karo.",
-        2: "Location unavailable. Device ka GPS on karo.",
-        3: "Location timed out. Dobara try karo."
+        1: "Location permission denied. Please allow location access in your browser.",
+        2: "Location unavailable. Please turn on your device GPS.",
+        3: "Location timed out. Please try again."
       };
-      setStatus(msgs[error.code] || "Location detect nahi hui. Khud enter karo.", "location-error");
+      setStatus(msgs[error.code] || "Could not detect your location. Please enter it manually.", "location-error");
     },
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
   );
