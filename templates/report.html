@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -334,7 +335,13 @@ async function fetchJson(url) {
 }
 
 async function reverseGeocode(lat, lon) {
-  // Two free services, no API key. The second one fills gaps (pincode, locality).
+  // 1) Ola Maps through our own backend (best for India)
+  try {
+    const ola = await fetchJson("/reverse-geocode?lat=" + encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lon));
+    if (ola && ola.address) return ola.address;
+  } catch (e) { /* fall back below */ }
+
+  // 2) Free fallback: two services, no API key. The second one fills gaps (pincode, locality).
   const nominatim = fetchJson(
     "https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=en" +
     "&lat=" + encodeURIComponent(lat) + "&lon=" + encodeURIComponent(lon)
